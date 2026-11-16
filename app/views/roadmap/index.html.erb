@@ -1,0 +1,109 @@
+<% content_for :title, "Roadmap" %>
+
+<div class="page-head">
+  <h1>Roadmap to the exam</h1>
+  <span class="muted"><%= @road.exam_date.strftime("%d %b %Y") %> · <%= @road.days_left %> days left</span>
+</div>
+
+<!-- ===== AI personal guide ===== -->
+<div class="card" style="margin-bottom:18px">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <h2 style="margin:0">🧭 Your guide</h2>
+    <span class="pill-btn <%= @journey.on_track? ? 'soft-teal' : 'soft-pink' %>">
+      <%= @journey.on_track? ? "On track" : "Behind" %>
+    </span>
+    <% if @guide.source == :ai %><span class="pill-btn soft-blue">AI</span><% end %>
+  </div>
+  <p style="font-weight:700;font-size:1.05rem;margin:10px 0 4px"><%= @guide.headline %></p>
+  <p style="color:var(--ink-soft);margin:0 0 14px"><%= @guide.narrative %></p>
+
+  <div class="sub" style="margin-bottom:8px">Do this next</div>
+  <div class="courselist">
+    <% @guide.guidance.each do |step| %>
+      <div class="courseitem"><span class="avatar-letter" style="background:var(--teal)">→</span>
+        <div class="ci-main"><div class="ci-title" style="font-weight:600"><%= step %></div></div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div class="grid">
+  <!-- ===== phase timeline ===== -->
+  <div class="col-8">
+    <div class="card">
+      <h2>Journey plan</h2>
+      <div class="sub">Phases from today to the exam, sized against your remaining work</div>
+      <% @journey.phases.each_with_index do |p, i| %>
+        <div style="display:flex;gap:14px;padding:12px 0;border-top:<%= '1px solid var(--line)' unless i.zero? %>">
+          <div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-weight:800;color:#fff;background:<%= %w[#2bb7a3 #4aa8e0 #f45b9c][i] %>"><%= i + 1 %></div>
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px">
+              <strong><%= p.label %></strong>
+              <span class="muted" style="font-size:.85rem"><%= p.start_date.strftime("%d %b") %> – <%= p.end_date.strftime("%d %b %Y") %></span>
+            </div>
+            <div class="muted" style="font-size:.82rem"><%= p.units %> units · ~<%= p.days_needed %> days</div>
+          </div>
+        </div>
+      <% end %>
+      <div class="ai-note" style="margin-top:12px">
+        Finishes <strong><%= @journey.phases.last.end_date.strftime("%d %b %Y") %></strong> —
+        <% if @journey.buffer_days >= 0 %>
+          <%= @journey.buffer_days %> days of buffer before the exam. 🎯
+        <% else %>
+          <strong style="color:var(--danger)"><%= -@journey.buffer_days %> days over</strong>. Pick up the pace.
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== lecture milestones ===== -->
+  <div class="col-4">
+    <div class="card">
+      <h2>Lecture targets</h2>
+      <div class="sub">Finish each subject's lectures by</div>
+      <div class="courselist">
+        <% @journey.lecture_milestones.each do |m| %>
+          <% s = @subjects.find { |x| x.code == m[:code] } %>
+          <div class="courseitem">
+            <span class="avatar-letter" style="background:<%= s&.color || 'var(--teal)' %>"><%= m[:code].first %></span>
+            <div class="ci-main">
+              <div class="ci-title"><%= m[:code] %> · <%= m[:done_by].strftime("%d %b") %></div>
+              <div class="ci-sub"><%= m[:remaining] %> lectures left</div>
+            </div>
+          </div>
+        <% end %>
+        <% if @journey.lecture_milestones.empty? %>
+          <div class="muted" style="font-size:.88rem">All lectures done — on to revision. ✅</div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== this week ===== -->
+<div class="card" style="margin-top:18px">
+  <h2>This week — <%= @journey.weekly_targets[:week_of].strftime("%d %b") %> to <%= @journey.weekly_targets[:week_end].strftime("%d %b") %></h2>
+  <div class="sub">Your rolling targets, recalculated as you progress</div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <% @journey.weekly_targets[:items].each do |t| %>
+      <span class="pill-btn soft-blue" style="padding:8px 14px"><%= t[:label] %> · <%= t[:modules] %> blocks</span>
+    <% end %>
+  </div>
+</div>
+
+<!-- ===== phase progress bars ===== -->
+<div class="grid">
+  <% SyllabusGoal::TASK_TYPES.each do |type| %>
+    <% total = @road.totals_by_type[type]; done = @road.done_by_type[type]
+       pct = total.zero? ? 0 : (done * 100 / total) %>
+    <div class="col-6">
+      <div class="card">
+        <div class="top" style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <strong><%= SyllabusGoal::LABELS[type] %></strong>
+          <span class="muted"><%= done %>/<%= total %> (<%= pct %>%)</span>
+        </div>
+        <div class="bar"><span style="width:<%= pct %>%;background:<%= completion_color(pct) %>"></span></div>
+      </div>
+    </div>
+  <% end %>
+</div>

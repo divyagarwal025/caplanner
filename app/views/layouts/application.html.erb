@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Caplanner" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Caplanner">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+    <script>
+      // Apply saved theme before first paint to avoid a flash.
+      (function () {
+        try {
+          var t = localStorage.getItem("theme");
+          if (t) document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+
+  <body data-controller="theme">
+    <div class="shell">
+      <aside class="sidebar" data-controller="sidebar">
+        <div class="sidebar-top">
+          <a href="<%= root_path %>" class="brand">
+            <span class="brand-mark">CA</span>
+            <span class="brand-text">Planner</span>
+          </a>
+          <button class="nav-toggle" data-action="sidebar#toggle" aria-label="Menu">☰</button>
+        </div>
+        <nav data-sidebar-target="nav">
+          <%= link_to root_path, class: ("active" if current_page?(root_path)) do %><span class="ico">📅</span><span class="lbl">Today</span><% end %>
+          <%= link_to roadmap_path, class: ("active" if controller_name == "roadmap") do %><span class="ico">🎯</span><span class="lbl">Roadmap</span><% end %>
+          <%= link_to calendar_path, class: ("active" if controller_name == "calendar") do %><span class="ico">🗓️</span><span class="lbl">Calendar</span><% end %>
+          <%= link_to analytics_path, class: ("active" if controller_name == "analytics") do %><span class="ico">📊</span><span class="lbl">Analytics</span><% end %>
+        </nav>
+        <div class="sidebar-foot">
+          <button class="theme-toggle" data-action="theme#toggle" aria-label="Toggle theme">
+            <span data-theme-target="icon">🌙</span>
+          </button>
+        </div>
+      </aside>
+
+      <main class="content">
+        <div class="content-inner">
+          <% if notice %><div class="flash" data-controller="flash"><span>✓</span> <%= notice %></div><% end %>
+          <%= yield %>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

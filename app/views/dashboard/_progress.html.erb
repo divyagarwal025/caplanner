@@ -1,0 +1,8 @@
+<div id="today-progress">
+  <% done = plan.blocks_done; total = plan.blocks_total %>
+  <div class="top" style="display:flex;justify-content:space-between;gap:12px;font-size:.88rem;margin-bottom:7px;color:var(--muted)">
+    <span><%= done %> / <%= total %> study blocks done</span>
+    <strong style="color:var(--ink)"><%= total.zero? ? 0 : (done * 100 / total) %>%</strong>
+  </div>
+  <div class="bar"><span style="width: <%= total.zero? ? 0 : (done * 100 / total) %>%"></span></div>
+</div>

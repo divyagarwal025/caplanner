@@ -1,0 +1,18 @@
+<%= turbo_frame_tag dom_id(task) do %>
+  <div class="task <%= 'done' if task.done? %>" id="<%= dom_id(task) %>">
+    <%= button_to toggle_task_item_path(task), method: :patch, class: "check", form_class: "inline" do %>
+      <%= task.done? ? "✓" : "" %>
+    <% end %>
+    <span class="time"><%= task.planned_window || "—" %></span>
+    <span class="activity">
+      <%= task.activity %>
+      <% if task.rescheduled_from_id %><span class="meta">· carried over</span><% end %>
+    </span>
+    <% if task.done? %>
+      <span class="flag done">done <%= task.completed_time_label %></span>
+    <% elsif task.overdue? %>
+      <span class="flag overdue">pending</span>
+    <% end %>
+    <span class="chip" style="background: <%= kind_color(task.kind) %>"><%= task.kind %></span>
+  </div>
+<% end %>

@@ -1,0 +1,34 @@
+<div style="font-family:system-ui,Segoe UI,Roboto,sans-serif;max-width:560px;margin:0 auto;color:#0f172a">
+  <h1 style="font-size:1.3rem">☀️ Good morning — <%= @date.strftime("%A, %d %B") %></h1>
+  <p style="color:#64748b"><%= @plan.label %><%= " · #{@plan.note}" if @plan.note.present? %></p>
+
+  <% if @ai_intro.present? %>
+    <p style="background:#eef2ff;border-left:3px solid #4f46e5;padding:10px 14px;border-radius:8px;font-size:14px;color:#1f2a44"><%= @ai_intro %></p>
+  <% end %>
+
+  <h2 style="font-size:1rem;border-bottom:2px solid #e2e8f0;padding-bottom:6px">Today's blocks</h2>
+  <table style="width:100%;border-collapse:collapse;font-size:14px">
+    <% @tasks.each do |t| %>
+      <tr>
+        <td style="padding:8px 6px;color:#64748b;white-space:nowrap">
+          <%= [ t.start_time, t.end_time ].compact.join("–").presence || "—" %>
+        </td>
+        <td style="padding:8px 6px"><%= t.activity %></td>
+        <td style="padding:8px 6px;text-align:right">
+          <span style="background:#eef2ff;color:#3730a3;padding:2px 8px;border-radius:999px;font-size:11px"><%= t.kind %></span>
+        </td>
+      </tr>
+    <% end %>
+  </table>
+
+  <h2 style="font-size:1rem;border-bottom:2px solid #e2e8f0;padding-bottom:6px;margin-top:24px">Where you stand</h2>
+  <ul style="font-size:14px;padding-left:18px">
+    <% @subjects.each do |s| %>
+      <li><strong><%= s.code %></strong>: <%= s.lectures_done %>/<%= s.lectures_total %> (<%= s.progress_percent %>%) — <%= s.remaining %> lectures left</li>
+    <% end %>
+  </ul>
+
+  <p style="color:#64748b;font-size:13px;margin-top:24px">
+    Remember: 20–30 min walk · 2–2.5 L water · 7+ hours sleep. One block at a time. 💪
+  </p>
+</div>

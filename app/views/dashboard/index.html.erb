@@ -1,0 +1,169 @@
+<% content_for :title, "Dashboard — CA Planner" %>
+
+<div class="page-head">
+  <h1>Dashboard</h1>
+  <span class="muted"><%= Date.current.strftime("%A, %d %B %Y") %> · <%= @today.label %></span>
+</div>
+
+<!-- ===== hero row: banner + promo CTA ===== -->
+<div class="grid">
+  <div class="col-8">
+    <div class="hero">
+      <% quote, author = motivational_quote %>
+      <h2 class="hero-quote">❝ <%= quote %></h2>
+      <p class="hero-author">— <%= author %></p>
+      <div class="hero-stats">
+        <div class="hero-pill">
+          <span class="ic pink">⏳</span>
+          <span><span class="big"><%= @road.days_left %></span><br><span class="lbl">Days to exam</span></span>
+        </div>
+        <div class="hero-pill">
+          <span class="ic amber">🔥</span>
+          <span><span class="big"><%= @streak %></span><br><span class="lbl">Day streak</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-4">
+    <div class="promo">
+      <h3>Ready to plan<br>tomorrow? 🌙</h3>
+      <%= button_to plan_tomorrow_path, method: :post, class: "cta" do %>
+        ✨ Plan tomorrow<%= " with AI" if @ai_enabled %>
+      <% end %>
+      <div class="promo-mini">
+        <div class="m">
+          <div class="cap blue">Pace needed</div>
+          <div class="num"><%= @road.required_pace %><span style="font-size:.8rem;color:var(--muted)">/d</span></div>
+        </div>
+        <div class="m">
+          <div class="cap teal">Blocks today</div>
+          <div class="num"><%= @today.blocks_done %><span style="font-size:.8rem;color:var(--muted)">/<%= @today.blocks_total %></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== three-column: today's blocks · activity · subjects ===== -->
+<div class="grid">
+  <!-- today's study blocks, styled as course list -->
+  <div class="col-4">
+    <div class="card">
+      <div class="section-title">Today's blocks <%= link_to "Full day →", day_plan_path(Date.current.iso8601) %></div>
+      <div class="courselist">
+        <% @today.task_items.ordered.each do |task| %>
+          <% color = task.subject&.color || kind_color(task.kind) %>
+          <div class="courseitem">
+            <div class="avatar-letter" style="background: <%= color %>">
+              <%= task.subject&.code&.first || task.kind.first.upcase %>
+            </div>
+            <div class="ci-main">
+              <div class="ci-title"><%= task.activity %></div>
+              <div class="ci-sub"><%= task.planned_window || task.kind.humanize %></div>
+            </div>
+            <%= button_to toggle_task_item_path(task), method: :patch, form_class: "inline",
+                  class: "pill-btn #{task.done? ? 'soft-teal' : 'soft-blue'}" do %>
+              <%= task.done? ? "✓ Done" : "Mark" %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- current activity: ring + week + bright stat tiles -->
+  <div class="col-4">
+    <div class="card">
+      <div class="section-title">Current activity</div>
+      <div class="ring-wrap">
+        <%= progress_ring(@today.completion_percent, size: 140, stroke: 13) %>
+        <span class="muted" style="font-weight:600"><%= @today.blocks_done %> of <%= @today.blocks_total %> blocks done</span>
+      </div>
+
+      <div style="margin-top:14px">
+        <div class="sub" style="margin-bottom:8px">This week</div>
+        <div class="weekstrip">
+          <% @week_days.each do |d| %>
+            <% log = @week_logs[d] %>
+            <%= link_to day_plan_path(d.iso8601), class: "d #{'today' if d == Date.current}" do %>
+              <div class="wd"><%= d.strftime("%a") %></div>
+              <div class="num"><%= d.day %></div>
+              <div class="pip" style="background: <%= completion_color(log&.completion_percent || 0) %>"></div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- subjects, styled as instructor list -->
+  <div class="col-4">
+    <div class="card">
+      <div class="section-title">Subjects</div>
+      <div class="courselist">
+        <% @subjects.each do |s| %>
+          <div class="courseitem">
+            <div class="avatar-letter" style="background: <%= s.color %>"><%= s.code.first %></div>
+            <div class="ci-main">
+              <div class="ci-title"><%= s.code %> · <%= s.progress_percent %>%</div>
+              <div class="ci-sub"><%= s.lectures_done %>/<%= s.lectures_total %> lectures</div>
+              <div class="bar" style="margin-top:7px"><span style="width:<%= s.progress_percent %>%;background:<%= s.color %>"></span></div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== roadmap phase + night update ===== -->
+<div class="grid">
+  <div class="col-8">
+    <div class="card">
+      <h2>🌙 Night update → plan tomorrow</h2>
+      <div class="sub">
+        Tick what you finished, then tell the planner what's still left or skipped.
+        It re-plans <%= (Date.current + 1).strftime("%a %d %b") %> toward your exam goal.
+      </div>
+      <%= form_with model: @night, url: night_updates_path, method: :post do |f| %>
+        <div class="field">
+          <%= f.text_area :raw_text, rows: 3,
+                placeholder: "e.g. Finished GST ch 1–3, FR revision half done, skipped Audit — too tired. Push Audit tomorrow.",
+                value: @night.raw_text %>
+        </div>
+        <div class="actions">
+          <%= f.submit "✨ Save & plan tomorrow#{' with AI' if @ai_enabled}", class: "btn ai" %>
+          <%= button_to "☀️ Morning brief", emails_morning_path, class: "btn ghost" %>
+          <%= button_to "🌙 Evening review", emails_evening_path, class: "btn ghost" %>
+        </div>
+      <% end %>
+
+      <% if @tomorrow %>
+        <div class="ai-note" style="margin-top:14px">
+          <strong>Tomorrow is planned<%= " by AI" if @tomorrow.ai_generated %>:</strong>
+          <%= @tomorrow.ai_summary %>
+          <%= link_to "View →", day_plan_path((Date.current + 1).iso8601) %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="col-4">
+    <div class="card" style="height:100%">
+      <h2>🎯 Roadmap</h2>
+      <div class="ai-note" style="margin-top:10px">
+        <strong><%= @road.phase_label %>.</strong>
+        <%= @road.total_remaining %> units over <%= @road.days_left %> days.
+      </div>
+      <div class="sub" style="margin-bottom:8px">Focus now</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <% @road.focus_subjects.each do |code| %>
+          <span class="pill-btn soft-teal"><%= code %></span>
+        <% end %>
+      </div>
+      <div class="actions"><%= link_to "See full roadmap →", roadmap_path %></div>
+    </div>
+  </div>
+</div>

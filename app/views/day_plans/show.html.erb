@@ -1,0 +1,35 @@
+<% content_for :title, @plan.date.strftime("%d %b") %>
+
+<div class="page-head">
+  <h1><%= @plan.date.strftime("%A, %d %B %Y") %></h1>
+  <span class="muted"><%= @plan.label %><%= " · AI-planned" if @plan.ai_generated %></span>
+</div>
+
+<div class="grid">
+  <div class="col-4">
+    <div class="card">
+      <h2>Completion</h2>
+      <div class="ring-wrap">
+        <%= progress_ring(@plan.completion_percent, size: 140, stroke: 13) %>
+        <span class="muted"><%= @plan.blocks_done %> of <%= @plan.blocks_total %> blocks</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-8">
+    <div class="card">
+      <% if @plan.ai_summary.present? %>
+        <div class="ai-note"><strong>AI plan:</strong> <%= @plan.ai_summary %></div>
+      <% end %>
+      <div>
+        <% @plan.task_items.ordered.each do |task| %>
+          <%= render "task_items/task", task: task %>
+        <% end %>
+      </div>
+      <div class="actions">
+        <%= button_to "Regenerate from rotation", regenerate_day_plan_path(@plan.date.iso8601, @plan), class: "btn ghost" %>
+        <%= button_to "✨ Re-plan with AI", plan_tomorrow_path(date: @plan.date.iso8601), class: "btn ai" %>
+      </div>
+    </div>
+  </div>
+</div>

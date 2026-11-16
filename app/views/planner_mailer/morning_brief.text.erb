@@ -1,0 +1,14 @@
+Good morning — <%= @date.strftime("%A, %d %B") %>
+<%= @plan.label %>
+
+TODAY'S BLOCKS
+<% @tasks.each do |t| -%>
+- <%= [ t.start_time, t.end_time ].compact.join("-").presence || "—" %>  <%= t.activity %> [<%= t.kind %>]
+<% end -%>
+
+WHERE YOU STAND
+<% @subjects.each do |s| -%>
+- <%= s.code %>: <%= s.lectures_done %>/<%= s.lectures_total %> (<%= s.progress_percent %>%), <%= s.remaining %> left
+<% end -%>
+
+20-30 min walk, 2-2.5 L water, 7+ hours sleep. One block at a time.

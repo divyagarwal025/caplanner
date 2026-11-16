@@ -1,0 +1,137 @@
+# CA Final (New Scheme) chapter list per paper — the revision modules.
+# Source: ICAI study material applicable for the May 2027 attempt.
+#   FR 17 · AFM 15 · AUDIT 19 · DT 28 · GST 32 (24 GST + 8 Customs). IBS is a
+#   case-study paper with no fixed chapters, so it has no revision modules.
+#
+# `days` = expected days to revise that chapter (2-5), estimated by chapter
+# weight (heavy/consolidation/valuation chapters 4-5; standard 3; short 2).
+# Edit any value later; the journey planner reads these durations.
+#
+# Format: SUBJECT_CODE => [[chapter_no, "name", days], ...]
+REVISION_MODULES = {
+  "FR" => [
+    [ 1,  "Introduction to Indian Accounting Standards", 2 ],
+    [ 2,  "Conceptual Framework for Financial Reporting under Ind AS", 2 ],
+    [ 3,  "Ind AS on Presentation of General Purpose Financial Statements", 3 ],
+    [ 4,  "Ind AS on Measurement based on Accounting Policies", 3 ],
+    [ 5,  "Ind AS on Assets of the Financial Statements", 4 ],
+    [ 6,  "Ind AS on Liabilities of the Financial Statements", 3 ],
+    [ 7,  "Ind AS on Items impacting the Financial Statements", 3 ],
+    [ 8,  "Ind AS on Disclosures in the Financial Statements", 2 ],
+    [ 9,  "Ind AS 115 Revenue from Contracts with Customers", 4 ],
+    [ 10, "Other Indian Accounting Standards", 3 ],
+    [ 11, "Accounting and Reporting of Financial Instruments", 5 ],
+    [ 12, "Ind AS 103 Business Combinations", 4 ],
+    [ 13, "Consolidated and Separate Financial Statements of Group Entities", 5 ],
+    [ 14, "Ind AS 101 First-time Adoption of Ind AS", 3 ],
+    [ 15, "Analysis of Financial Statements", 3 ],
+    [ 16, "Professional and Ethical Duty of a Chartered Accountant", 2 ],
+    [ 17, "Accounting and Technology", 2 ]
+  ],
+  "AFM" => [
+    [ 1,  "Financial Policy and Corporate Strategy", 2 ],
+    [ 2,  "Risk Management", 3 ],
+    [ 3,  "Advanced Capital Budgeting Decisions", 4 ],
+    [ 4,  "Security Analysis", 3 ],
+    [ 5,  "Security Valuation", 4 ],
+    [ 6,  "Portfolio Management", 4 ],
+    [ 7,  "Securitization", 2 ],
+    [ 8,  "Mutual Funds", 3 ],
+    [ 9,  "Derivatives Analysis and Valuation", 5 ],
+    [ 10, "Foreign Exchange Exposure and Risk Management", 4 ],
+    [ 11, "International Financial Management", 3 ],
+    [ 12, "Interest Rate Risk Management", 3 ],
+    [ 13, "Business Valuation", 4 ],
+    [ 14, "Mergers, Acquisitions and Corporate Restructuring", 4 ],
+    [ 15, "Startup Finance", 2 ]
+  ],
+  "AUDIT" => [
+    [ 1,  "Quality Control", 2 ],
+    [ 2,  "General Auditing Principles and Auditors Responsibilities", 3 ],
+    [ 3,  "Audit Planning, Strategy and Execution", 3 ],
+    [ 4,  "Materiality, Risk Assessment and Internal Control", 3 ],
+    [ 5,  "Audit Evidence", 3 ],
+    [ 6,  "Completion and Review", 2 ],
+    [ 7,  "Reporting", 4 ],
+    [ 8,  "Specialised Areas", 3 ],
+    [ 9,  "Related Services", 2 ],
+    [ 10, "Review of Financial Information", 2 ],
+    [ 11, "Prospective Financial Information and Other Assurance Services", 2 ],
+    [ 12, "Digital Auditing & Assurance", 2 ],
+    [ 13, "Group Audits", 3 ],
+    [ 14, "Special Features of Audit of Banks & NBFCs", 3 ],
+    [ 15, "Overview of Audit of Public Sector Undertakings", 2 ],
+    [ 16, "Internal Audit", 2 ],
+    [ 17, "Due Diligence, Investigation & Forensic Accounting", 3 ],
+    [ 18, "SDG & ESG Assurance", 2 ],
+    [ 19, "Professional Ethics & Liabilities of Auditors", 4 ]
+  ],
+  "DT" => [
+    [ 1,  "Basic Concepts", 2 ],
+    [ 2,  "Incomes which do not form part of Total Income", 2 ],
+    [ 3,  "Profits and Gains of Business or Profession", 5 ],
+    [ 4,  "Capital Gains", 5 ],
+    [ 5,  "Income from Other Sources", 3 ],
+    [ 6,  "Income of Other Persons included in Assessee's Total Income", 2 ],
+    [ 7,  "Set Off or Carry Forward of Losses", 3 ],
+    [ 8,  "Deductions from Gross Total Income", 3 ],
+    [ 9,  "Assessment of Various Entities", 4 ],
+    [ 10, "Assessment of Trusts, Institutions, Political Parties & Other Special Entities", 3 ],
+    [ 11, "Tax Planning, Tax Avoidance and Tax Evasion", 2 ],
+    [ 12, "Taxation of Digital Transactions", 2 ],
+    [ 13, "Deduction, Collection and Recovery of Tax", 4 ],
+    [ 14, "Income Tax Authorities", 2 ],
+    [ 15, "Assessment Procedure", 4 ],
+    [ 16, "Appeals and Revision", 3 ],
+    [ 17, "Dispute Resolution", 2 ],
+    [ 18, "Miscellaneous Provisions", 2 ],
+    [ 19, "Provisions to Counteract Unethical Tax Practices", 2 ],
+    [ 20, "Tax Audit and Ethical Compliances", 3 ],
+    [ 21, "Non Resident Taxation", 4 ],
+    [ 22, "Double Taxation Relief", 3 ],
+    [ 23, "Advance Rulings", 2 ],
+    [ 24, "Transfer Pricing", 5 ],
+    [ 25, "Fundamentals of BEPS", 2 ],
+    [ 26, "Application and Interpretation of Tax Treaties", 3 ],
+    [ 27, "Overview of Model Tax Conventions", 2 ],
+    [ 28, "Latest Developments in International Taxation", 2 ]
+  ],
+  "GST" => [
+    # Part I — GST
+    [ 1,  "Supply under GST", 4 ],
+    [ 2,  "Charge of GST", 3 ],
+    [ 3,  "Place of Supply", 4 ],
+    [ 4,  "Exemptions from GST", 3 ],
+    [ 5,  "Time of Supply", 3 ],
+    [ 6,  "Value of Supply", 3 ],
+    [ 7,  "Input Tax Credit", 5 ],
+    [ 8,  "Registration", 3 ],
+    [ 9,  "Tax Invoice, Credit and Debit Notes", 2 ],
+    [ 10, "Accounts and Records; E-way Bill", 2 ],
+    [ 11, "Payment of Tax", 3 ],
+    [ 12, "Electronic Commerce Transactions", 2 ],
+    [ 13, "Returns", 3 ],
+    [ 14, "Import and Export Under GST", 3 ],
+    [ 15, "Refunds", 3 ],
+    [ 16, "Job Work", 2 ],
+    [ 17, "Assessment and Audit", 2 ],
+    [ 18, "Inspection, Search, Seizure and Arrest", 2 ],
+    [ 19, "Demands and Recovery", 3 ],
+    [ 20, "Liability to Pay in Certain Cases", 2 ],
+    [ 21, "Offences and Penalties and Ethical Aspects under GST", 3 ],
+    [ 22, "Appeals and Revision", 2 ],
+    [ 23, "Advance Ruling", 2 ],
+    [ 24, "Miscellaneous Provisions", 2 ],
+    # Part II — Customs & FTP (chapter numbers continue for a single ordering)
+    [ 25, "Customs: Levy of and Exemptions from Customs Duty", 3 ],
+    [ 26, "Customs: Types of Duty", 2 ],
+    [ 27, "Customs: Classification of Imported and Export Goods", 2 ],
+    [ 28, "Customs: Valuation under the Customs Act, 1962", 3 ],
+    [ 29, "Customs: Importation and Exportation of Goods", 3 ],
+    [ 30, "Customs: Warehousing", 2 ],
+    [ 31, "Customs: Refund", 2 ],
+    [ 32, "Foreign Trade Policy", 3 ]
+  ]
+  # IBS: Integrated Business Solutions — multidisciplinary case-study paper,
+  # no fixed chapters, so no revision modules.
+}.freeze

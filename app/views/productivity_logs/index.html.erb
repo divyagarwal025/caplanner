@@ -1,0 +1,26 @@
+<% content_for :title, "Productivity logs" %>
+<h1 style="font-size:1.3rem">Productivity logs</h1>
+
+<div class="card">
+  <% if @logs.empty? %>
+    <p class="sub">No logs yet. Log your first day from the dashboard.</p>
+  <% else %>
+    <table class="logs">
+      <thead>
+        <tr><th>Date</th><th>Blocks</th><th>%</th><th>Health</th><th>Mood</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <% @logs.each do |log| %>
+          <tr>
+            <td><%= log.date.strftime("%a %d %b") %></td>
+            <td><%= log.blocks_done %>/<%= log.blocks_total %></td>
+            <td><%= log.completion_percent %>%</td>
+            <td><%= log.health_score %>/3</td>
+            <td><%= log.mood || "–" %></td>
+            <td><%= truncate(log.notes, length: 40) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</div>

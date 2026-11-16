@@ -1,0 +1,47 @@
+<% content_for :title, "Calendar" %>
+<% prev_m = @month - 1.month; next_m = @month + 1.month %>
+
+<div class="page-head">
+  <h1>Calendar</h1>
+  <div class="cal-nav">
+    <%= link_to "‹ #{prev_m.strftime('%b')}", calendar_path(prev_m.year, prev_m.month) %>
+    <strong><%= @month.strftime("%B %Y") %></strong>
+    <%= link_to "#{next_m.strftime('%b')} ›", calendar_path(next_m.year, next_m.month) %>
+    <%= link_to "Today", calendar_path, class: "muted" %>
+  </div>
+</div>
+
+<div class="card">
+  <table class="cal">
+    <thead>
+      <tr><% %w[Sun Mon Tue Wed Thu Fri Sat].each { |d| %><th><%= d %></th><% } %></tr>
+    </thead>
+    <tbody>
+      <% @weeks.each do |week| %>
+        <tr>
+          <% week.each do |day| %>
+            <% log = @logs[day]; plan = @plans[day]
+               pct = log&.completion_percent
+               in_month = day.month == @month.month %>
+            <td>
+              <%= link_to day_plan_path(day.iso8601),
+                    class: "cell #{'other' unless in_month} #{'today' if day == Date.current}" do %>
+                <span class="dnum"><%= day.day %></span>
+                <% if pct %>
+                  <span class="pct" style="color:<%= completion_color(pct) %>"><%= pct %>%</span>
+                <% elsif plan&.ai_generated %>
+                  <span class="meta" style="position:absolute;bottom:6px;left:8px;font-size:.66rem;color:#7c3aed">AI</span>
+                <% end %>
+                <% if plan %><span class="pip" style="background:<%= completion_color(pct || 0) %>"></span><% end %>
+              <% end %>
+            </td>
+          <% end %>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <div class="sub" style="margin-top:12px">
+    Colour = that day's completion. Click any day to open its plan.
+    <span style="color:#7c3aed">AI</span> marks days the planner scheduled.
+  </div>
+</div>

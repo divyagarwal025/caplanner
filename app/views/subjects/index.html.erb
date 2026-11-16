@@ -1,0 +1,21 @@
+<% content_for :title, "Subjects" %>
+<h1 style="font-size:1.3rem">Syllabus progress</h1>
+
+<% @subjects.each do |s| %>
+  <div class="card">
+    <div class="subject-row">
+      <div class="top">
+        <span><span class="dot" style="background:<%= s.color %>"></span><strong><%= s.code %></strong> · <%= s.name %></span>
+        <span><%= s.progress_percent %>% · <%= s.remaining %> left</span>
+      </div>
+      <div class="bar"><span style="width:<%= s.progress_percent %>%;background:<%= s.color %>"></span></div>
+    </div>
+    <%= form_with model: s, url: subject_path(s), method: :patch do |f| %>
+      <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-top:10px">
+        <div class="field" style="margin:0"><label>Done</label><%= f.number_field :lectures_done, min: 0 %></div>
+        <div class="field" style="margin:0"><label>Total</label><%= f.number_field :lectures_total, min: 0 %></div>
+        <%= f.submit "Save", class: "btn" %>
+      </div>
+    <% end %>
+  </div>
+<% end %>
