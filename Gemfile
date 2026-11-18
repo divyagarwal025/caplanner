@@ -64,6 +64,10 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
+
+  # Load ENV vars from a gitignored .env in development (SMTP + OpenAI keys),
+  # so we can send real email locally without putting secrets in the repo.
+  gem "dotenv-rails"
 end
 
 group :test do

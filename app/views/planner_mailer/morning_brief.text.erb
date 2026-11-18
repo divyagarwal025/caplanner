@@ -1,14 +1,20 @@
-Good morning — <%= @date.strftime("%A, %d %B") %>
-<%= @plan.label %>
+<%= @letter[:greeting] %>
 
-TODAY'S BLOCKS
-<% @tasks.each do |t| -%>
-- <%= [ t.start_time, t.end_time ].compact.join("-").presence || "—" %>  <%= t.activity %> [<%= t.kind %>]
-<% end -%>
+<%= @letter[:opening] %>
 
-WHERE YOU STAND
-<% @subjects.each do |s| -%>
-- <%= s.code %>: <%= s.lectures_done %>/<%= s.lectures_total %> (<%= s.progress_percent %>%), <%= s.remaining %> left
-<% end -%>
+🎯 Today's Battle Plan
+<% @letter[:blocks].each do |b| %>
+<%= b[:icon] %> <%= b[:time] %> | <%= b[:title] %>
+   <%= b[:note] %>
+<% end %>
+💡 A Little Reminder for You
+<%= @letter[:break_tip] %>
 
-20-30 min walk, 2-2.5 L water, 7+ hours sleep. One block at a time.
+🌟 Today's Motivation
+"<%= @letter[:quote] %>"<% if @letter[:quote_author].present? %> — <%= @letter[:quote_author] %><% end %>
+
+<%= @letter[:closing] %>
+
+Your Preparation Guide,
+<%= BriefWriter::GUIDE_NAME %> 🤝
+<%= @letter[:signoff] %>

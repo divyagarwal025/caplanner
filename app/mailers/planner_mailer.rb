@@ -1,15 +1,13 @@
 class PlannerMailer < ApplicationMailer
   # Sent in the morning: today's blocks + subject focus.
   def morning_brief(date = Date.current)
-    @setting  = Setting.instance
-    @plan     = DayPlan.for(date)
-    @tasks    = @plan.task_items.ordered
-    @subjects = Subject.all
-    @date     = date
-    @ai_intro = BriefWriter.new(today: date).morning(@plan)
+    @setting = Setting.instance
+    @plan    = DayPlan.for(date)
+    @date    = date
+    @letter  = BriefWriter.new(today: date).morning_letter(@plan)
 
     mail to: @setting.email,
-         subject: "☀️ #{date.strftime('%a %d %b')} — your CA plan for today"
+         subject: "☀️ Good Morning, #{BriefWriter::STUDENT_NAME}! Your CA plan for #{date.strftime('%a %d %b')}"
   end
 
   # Sent in the evening: how today went + a nudge to log it.

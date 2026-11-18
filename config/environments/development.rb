@@ -34,20 +34,42 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
-  # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = false
-
-  # In development, save emails as .html files you can open in a browser:
-  # tmp/mails/<timestamp>.html  (no SMTP setup needed to preview briefs).
-  config.action_mailer.delivery_method = :file
-  config.action_mailer.file_settings = { location: Rails.root.join("tmp/mails") }
-  config.action_mailer.perform_deliveries = true
+  # When SMTP_USER is present (loaded from .env via dotenv), send REAL email
+  # through Gmail so we can test the morning brief end-to-end over an ngrok
+  # tunnel. Without it, fall back to writing emails to tmp/mails/*.html.
+  if ENV["SMTP_USER"].present?
+    config.action_mailer.raise_delivery_errors = true
+    config.action_mailer.perform_deliveries   = true
+    config.action_mailer.delivery_method      = :smtp
+    config.action_mailer.smtp_settings = {
+      address:              ENV.fetch("SMTP_ADDRESS", "smtp.gmail.com"),
+      port:                 ENV.fetch("SMTP_PORT", "587").to_i,
+      user_name:            ENV["SMTP_USER"],
+      password:             ENV["SMTP_PASSWORD"],
+      authentication:       :plain,
+      enable_starttls_auto: true
+    }
+  else
+    config.action_mailer.raise_delivery_errors = false
+    config.action_mailer.delivery_method = :file
+    config.action_mailer.file_settings = { location: Rails.root.join("tmp/mails") }
+    config.action_mailer.perform_deliveries = true
+  end
 
   # Make template changes take effect immediately.
   config.action_mailer.perform_caching = false
 
-  # Set localhost to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
+  # Host used by links in mailer templates. With an ngrok tunnel set APP_HOST
+  # (e.g. abcd-1234.ngrok-free.app) so "mark done" links in the email open the
+  # running local app over https; otherwise fall back to localhost:3001.
+  if ENV["APP_HOST"].present?
+    config.action_mailer.default_url_options = { host: ENV["APP_HOST"], protocol: "https" }
+    config.hosts << ENV["APP_HOST"]
+    config.hosts << /.*\.ngrok-free\.app/
+    config.hosts << /.*\.ngrok\.io/
+  else
+    config.action_mailer.default_url_options = { host: "localhost", port: 3001 }
+  end
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log

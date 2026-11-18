@@ -1,0 +1,38 @@
+#!/usr/bin/env ruby
+# One-shot overnight runner: waits until 08:00 IST tomorrow, then sends the
+# morning brief for TOMORROW's tasks to the user. Used for local testing before
+# deploying (no Solid Queue / worker needed).
+#
+# Usage:
+#   bin/send-morning-brief-tomorrow            # wait until 8am tomorrow, then send
+#   SEND_NOW=1 bin/send-morning-brief-tomorrow # send immediately (for a test run)
+#
+# Leave this running in its own terminal overnight (laptop + server + ngrok up).
+
+require_relative "../config/environment"
+
+tz        = ActiveSupport::TimeZone["Asia/Kolkata"]
+now       = Time.current.in_time_zone(tz)
+target_at = tz.parse("08:00", (now.to_date + 1)) # 8:00 AM IST tomorrow
+brief_date = (now.to_date + 1)                    # tomorrow's plan
+
+if ENV["SEND_NOW"] == "1"
+  puts "[send-morning-brief] SEND_NOW set — sending brief for #{brief_date} right now."
+else
+  puts "[send-morning-brief] now:    #{now.strftime('%a %d %b %Y %H:%M:%S %Z')}"
+  puts "[send-morning-brief] target: #{target_at.strftime('%a %d %b %Y %H:%M:%S %Z')} (brief for #{brief_date})"
+  wait = target_at - Time.current
+  if wait <= 0
+    puts "[send-morning-brief] 8am already passed today window — sending now."
+  else
+    puts "[send-morning-brief] sleeping #{(wait / 3600.0).round(2)} h until 8am IST..."
+    sleep(wait)
+  end
+end
+
+# Generate tomorrow's plan (from current goal counters — reflects what the user
+# ticked off today) and email it.
+plan = DayPlan.for(brief_date)
+puts "[send-morning-brief] plan for #{brief_date}: #{plan.task_items.count} blocks"
+PlannerMailer.morning_brief(brief_date).deliver_now
+puts "[send-morning-brief] ✅ morning brief for #{brief_date} delivered to #{Setting.instance.email}"

@@ -4,8 +4,9 @@
 # free-text), and asks Groq for tomorrow's best blocks. Falls back to a
 # goal-aware rule engine when no API key is configured or the call fails.
 class NextDayPlanner
+  # Lecture slots 3h, revision slot 2h (kept in sync with DayPlanGenerator).
   BLOCK_TIMES = [ [ "09:00", "12:00" ], [ "13:00", "16:00" ],
-                  [ "16:30", "17:30" ], [ "19:00", "21:00" ] ].freeze
+                  [ "16:30", "18:30" ], [ "20:00", "23:00" ] ].freeze
 
   Result = Struct.new(:plan, :source, :error, keyword_init: true)
 

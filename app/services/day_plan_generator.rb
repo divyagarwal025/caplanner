@@ -32,11 +32,12 @@ class DayPlanGenerator
   REVISION_CHAIN = %w[FR AFM AUDIT DT GST IBS].freeze
 
   # Clock times for the four blocks on a normal day.
+  # Lecture slots are 3 hours each; the revision slot is 2 hours.
   BLOCK_TIMES = [
-    [ "09:00", "12:00" ],
-    [ "13:00", "16:00" ],
-    [ "16:30", "17:30" ],
-    [ "19:00", "21:00" ]
+    [ "09:00", "12:00" ],  # lecture  (3h)
+    [ "13:00", "16:00" ],  # lecture  (3h)
+    [ "16:30", "18:30" ],  # revision (2h)
+    [ "20:00", "23:00" ]   # lecture  (3h)
   ].freeze
 
   # Health/hygiene is never allowed to crowd out study; capped regardless.
