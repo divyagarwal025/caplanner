@@ -1,16 +1,25 @@
 class DashboardController < ApplicationController
   def index
-    @today      = DayPlan.for(Date.current)
-    @subjects   = Subject.all
+    @date       = Date.current
+    @milestone  = Milestone.for_date(@date)
+    @today      = day_item_for(@date)
+    @tomorrow   = day_item_for(@date + 1)
+    @subjects   = current_user.subjects.ordered
+    @milestones = current_user.milestones.chronological
+
     @streak     = ProductivityService.current_streak
     @week_rate  = ProductivityService.week_completion_rate
-    @tomorrow   = DayPlan.find_by(date: Date.current + 1)
-    @ai_enabled = ENV["GROQ_API_KEY"].present?
-    @road       = RoadmapService.new
-    @night      = NightUpdate.for(Date.current)
+    @ai_enabled = AiClient.enabled?
 
-    range = Date.current.beginning_of_week(:sunday)..Date.current.end_of_week(:sunday)
-    @week_logs = ProductivityLog.where(date: range).index_by(&:date)
-    @week_days = range.to_a
+    # Days remaining to the exam (= last milestone's end date).
+    exam_end    = @milestones.last&.end_date
+    @days_left  = exam_end ? [ (exam_end - @date).to_i, 0 ].max : nil
+
+    # This calendar week's completion, by date, for the week strip.
+    range       = @date.beginning_of_week(:sunday)..@date.end_of_week(:sunday)
+    @week_days  = range.to_a
+    @week_items = MilestoneSubjectTaskItem
+                    .where(milestone: @milestones, date: range)
+                    .index_by(&:date)
   end
 end

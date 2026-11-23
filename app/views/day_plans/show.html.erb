@@ -1,35 +1,76 @@
-<% content_for :title, @plan.date.strftime("%d %b") %>
+<% content_for :title, "#{@date.strftime('%a %d %b')} — CA Planner" %>
 
 <div class="page-head">
-  <h1><%= @plan.date.strftime("%A, %d %B %Y") %></h1>
-  <span class="muted"><%= @plan.label %><%= " · AI-planned" if @plan.ai_generated %></span>
+  <h1><%= @date.strftime("%A, %d %B %Y") %></h1>
+  <span class="muted">
+    <% if @milestone %><%= @milestone.name %><% else %>No milestone covers this date<% end %>
+  </span>
 </div>
 
-<div class="grid">
-  <div class="col-4">
-    <div class="card">
-      <h2>Completion</h2>
-      <div class="ring-wrap">
-        <%= progress_ring(@plan.completion_percent, size: 140, stroke: 13) %>
-        <span class="muted"><%= @plan.blocks_done %> of <%= @plan.blocks_total %> blocks</span>
-      </div>
-    </div>
+<% if @item.nil? %>
+  <div class="card">
+    <p class="muted">There's no saved plan for this day.</p>
+    <% if @milestone %>
+      <%= button_to "Regenerate day", regenerate_day_plan_path(@date.iso8601), method: :post, class: "btn ghost" %>
+    <% end %>
+    <div class="actions"><%= link_to "← Back to dashboard", root_path %></div>
   </div>
+<% else %>
+  <div class="grid">
+    <div class="col-8">
+      <div class="card">
+        <div class="section-title">
+          Today's blocks
+          <span class="muted"><%= @item.blocks_done %>/<%= @item.blocks_total %> done · <%= @item.completion_percent %>%</span>
+        </div>
 
-  <div class="col-8">
-    <div class="card">
-      <% if @plan.ai_summary.present? %>
-        <div class="ai-note"><strong>AI plan:</strong> <%= @plan.ai_summary %></div>
-      <% end %>
-      <div>
-        <% @plan.task_items.ordered.each do |task| %>
-          <%= render "task_items/task", task: task %>
+        <%= form_with url: save_day_plan_path(@date.iso8601), method: :post do %>
+          <div class="courselist">
+            <% @item.blocks.each_with_index do |b, i| %>
+              <% code  = b["subject_code"] %>
+              <% color = subject_color(code) || kind_color(b["kind"]) %>
+              <div class="courseitem">
+                <div class="avatar-letter" style="background: <%= color %>">
+                  <%= (code && code.first) || b["kind"].to_s.first.to_s.upcase %>
+                </div>
+                <div class="ci-main">
+                  <div class="ci-title"><%= b["activity"] %></div>
+                  <div class="ci-sub">
+                    <%= [ b["start_time"], b["end_time"] ].compact.join(" – ").presence || b["kind"].to_s.humanize %>
+                  </div>
+                  <div class="statebtns" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+                    <% MilestoneSubjectTaskItem::STATUSES.each do |st| %>
+                      <label class="pill-btn <%= b["status"] == st ? status_pill_class(st) : 'soft-grey' %>"
+                             style="cursor:pointer">
+                        <%= radio_button_tag "statuses[#{i}]", st, b["status"] == st, style: "display:none" %>
+                        <%= status_label(st) %>
+                      </label>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+
+          <div class="actions" style="margin-top:16px">
+            <%= submit_tag "💾 Save day & update progress", class: "btn ai" %>
+            <%= link_to "← Dashboard", root_path, class: "btn ghost" %>
+          </div>
         <% end %>
       </div>
-      <div class="actions">
-        <%= button_to "Regenerate from rotation", regenerate_day_plan_path(@plan.date.iso8601, @plan), class: "btn ghost" %>
-        <%= button_to "✨ Re-plan with AI", plan_tomorrow_path(date: @plan.date.iso8601), class: "btn ai" %>
+    </div>
+
+    <div class="col-4">
+      <div class="card">
+        <div class="section-title">Day summary</div>
+        <div class="ring-wrap">
+          <%= progress_ring(@item.completion_percent, size: 130, stroke: 12) %>
+          <span class="muted" style="font-weight:600"><%= @item.blocks_done %> of <%= @item.blocks_total %> blocks done</span>
+        </div>
+        <% if @item.summary.present? %>
+          <div class="ai-note" style="margin-top:12px"><%= @item.summary %></div>
+        <% end %>
       </div>
     </div>
   </div>
-</div>
+<% end %>

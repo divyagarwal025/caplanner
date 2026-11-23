@@ -35,6 +35,34 @@ module ApplicationHelper
     KIND_COLORS.fetch(kind, "#334155")
   end
 
+  # Colour for a subject code (nil-safe); used by the block list.
+  def subject_color(code)
+    return nil if code.blank?
+    (@subject_colors ||= Subject.all.index_by(&:code))[code]&.color
+  end
+
+  # --- 3-state block status helpers ------------------------------------------
+
+  STATUS_LABELS = {
+    "not_started"    => "○ Not started",
+    "partially_done" => "◐ Partial",
+    "done"           => "✓ Done"
+  }.freeze
+
+  STATUS_PILL = {
+    "not_started"    => "soft-blue",
+    "partially_done" => "soft-amber",
+    "done"           => "soft-teal"
+  }.freeze
+
+  def status_label(status)
+    STATUS_LABELS.fetch(status.to_s, STATUS_LABELS["not_started"])
+  end
+
+  def status_pill_class(status)
+    STATUS_PILL.fetch(status.to_s, "soft-blue")
+  end
+
   # Green→amber→grey scale for a completion percentage (calendar cells, rings).
   def completion_color(percent)
     case percent

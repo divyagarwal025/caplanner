@@ -7,27 +7,25 @@ Rails.application.routes.draw do
   get "analytics", to: "analytics#index", as: :analytics
   get "roadmap", to: "roadmap#index", as: :roadmap
 
+  # The night report for a date (free text), which also triggers re-planning.
   resources :night_updates, only: %i[create], param: :date
-  resources :syllabus_goals, only: %i[update]
 
+  # A day's plan = the milestone_subject_task_item for that date.
   resources :day_plans, only: %i[show], param: :date do
     member do
+      post :save
       post :regenerate
     end
   end
 
-  # AI plans the next day (Groq, with rotation fallback).
+  # Set a single block's 3-state status within a day's jsonb schedule.
+  patch "blocks/:date/:index", to: "blocks#update", as: :block
+
+  # AI plans the next day (with deterministic fallback).
   post "plan_tomorrow", to: "ai_plans#create", as: :plan_tomorrow
 
-  resources :task_items, only: :update do
-    member { patch :toggle }
-  end
-
   resources :subjects, only: %i[index update]
-
-  resources :productivity_logs, only: %i[index create update], param: :date
-
-  resource :settings, only: %i[edit update]
+  resources :milestones, only: %i[index show new create edit update destroy]
 
   # Manual triggers to preview the scheduled emails.
   namespace :emails do
