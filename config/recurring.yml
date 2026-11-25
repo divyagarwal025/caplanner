@@ -14,13 +14,12 @@ production:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
 
-  # Morning brief: today's plan emailed to the user.
+  # Morning brief: today's plan + AI motivation, emailed to the user at 7am.
   morning_brief:
     class: MorningBriefJob
     schedule: every day at 7am
 
-  # Nightly reflow: snapshot today, AI-adjust tomorrow's plan toward the exam
-  # goal (carrying over any backlog), and email the user what to do next.
+  # Nightly re-plan: reflow upcoming days from how today went, email what moved.
   nightly_replan:
     class: NightlyReplanJob
     schedule: every day at 10pm

@@ -1,0 +1,22 @@
+Tonight's plan update — <%= @date.strftime("%A, %d %B %Y") %>
+
+<% unless @result.ok? -%>
+<%= @result.headline %>
+Your existing plan is unchanged. I'll try again tomorrow night.
+<% else -%>
+<%= @result.headline %>
+
+<% if @result.changed? && @moves.any? -%>
+Your refreshed days:
+<% @moves.each do |m| -%>
+  - <%= m %>
+<% end -%>
+
+Open the planner in the morning to see the full refreshed schedule.
+<% else -%>
+You're on track — no changes needed. Rest well.
+<% end -%>
+<% end -%>
+
+Your Preparation Guide,
+<%= BriefWriter::GUIDE_NAME %>

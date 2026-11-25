@@ -14,4 +14,10 @@ class User < ApplicationRecord
   def self.current
     sole
   end
+
+  # A friendly display name derived from the email local-part (no name column),
+  # e.g. "divyagarwal@gmail.com" -> "Divyagarwal". Used in the email briefs.
+  def display_name
+    email.to_s.split("@").first.to_s.split(/[._-]/).map(&:capitalize).join(" ").presence || "there"
+  end
 end

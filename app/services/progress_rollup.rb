@@ -93,17 +93,31 @@ class ProgressRollup
 
   # ---- revision -------------------------------------------------------------
 
+  # Revision is monotonic / baseline-anchored: topics already marked done (e.g.
+  # historical progress entered directly, not via day blocks) are the FLOOR and
+  # are never un-marked. We advance the done frontier by the number of done
+  # revision blocks for this round, counting from the existing floor — so
+  # ticking today's revision block moves to the NEXT pending topic rather than
+  # resetting earlier ones.
   def roll_revision(subject, round:)
     col     = "rev#{round}_status"
     topics  = subject.revision_topics.order(:order_number).to_a
-    n_done  = done_count(subject.code, kind: "revision", round: round) +
-              done_count(subject.code, kind: "questions", round: round)
+
+    # Floor = how many topics are already done at the front of the list.
+    floor = 0
+    floor += 1 while topics[floor] && topics[floor].public_send(col) == "done"
+
+    advanced = done_count(subject.code, kind: "revision", round: round) +
+               done_count(subject.code, kind: "questions", round: round)
+
+    n_done  = [ floor + advanced, topics.size ].min
+    partial = any_partial?(subject.code, kind: "revision", round: round)
 
     topics.each_with_index do |topic, i|
       target =
         if i < n_done then "done"
-        elsif i == n_done && any_partial?(subject.code, kind: "revision", round: round) then "in_progress"
-        else "not_started"
+        elsif i == n_done && partial then "in_progress"
+        else topic.public_send(col) == "done" ? "done" : "not_started"
         end
       topic.update!(col => target) if topic.public_send(col) != target
     end

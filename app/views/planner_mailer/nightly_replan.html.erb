@@ -1,0 +1,33 @@
+<div style="font-family:Georgia,'Times New Roman',serif;max-width:600px;margin:0 auto;color:#1f2937;line-height:1.7;font-size:15px">
+
+  <p style="font-size:1.35rem;font-weight:bold;color:#0f172a;margin:0 0 6px">🌙 Tonight's plan update</p>
+  <p style="margin:0 0 20px;color:#64748b"><%= @date.strftime("%A, %d %B %Y") %></p>
+
+  <% unless @result.ok? %>
+    <div style="margin:0 0 18px;padding:12px 14px;background:#fef2f2;border-left:4px solid #ef4444;border-radius:6px;color:#991b1b">
+      <%= @result.headline %>
+    </div>
+    <p style="margin:0 0 18px;color:#374151">Your existing plan is unchanged. I'll try again tomorrow night. ❤️</p>
+  <% else %>
+    <p style="margin:0 0 18px"><%= @result.headline %></p>
+
+    <% if @result.changed? && @moves.any? %>
+      <h2 style="font-size:1.1rem;color:#0f766e;margin:24px 0 12px">Your refreshed days</h2>
+      <ul style="margin:0 0 18px;padding-left:18px;color:#374151">
+        <% @moves.each do |m| %>
+          <li style="margin:0 0 8px"><%= m %></li>
+        <% end %>
+      </ul>
+      <p style="margin:0 0 18px;color:#475569;font-size:14px">
+        Open the planner in the morning to see the full refreshed schedule.
+      </p>
+    <% else %>
+      <p style="margin:0 0 18px;color:#374151">You're on track — no changes needed. Rest well. ❤️</p>
+    <% end %>
+  <% end %>
+
+  <div style="border-top:1px solid #e5e7eb;padding-top:16px;color:#0f172a">
+    <p style="margin:0">Your Preparation Guide,</p>
+    <p style="margin:4px 0 0;font-weight:bold;font-size:1.1rem"><%= BriefWriter::GUIDE_NAME %> 🤝</p>
+  </div>
+</div>

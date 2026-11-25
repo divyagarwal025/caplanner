@@ -48,7 +48,8 @@
         </div>
         <nav data-sidebar-target="nav">
           <%= link_to root_path, class: ("active" if current_page?(root_path)) do %><span class="ico">📅</span><span class="lbl">Today</span><% end %>
-          <%= link_to roadmap_path, class: ("active" if controller_name == "roadmap") do %><span class="ico">🎯</span><span class="lbl">Roadmap</span><% end %>
+          <%= link_to milestones_path, class: ("active" if controller_name == "milestones") do %><span class="ico">🏁</span><span class="lbl">Milestones</span><% end %>
+          <%= link_to subjects_path, class: ("active" if controller_name == "subjects") do %><span class="ico">📚</span><span class="lbl">Courses</span><% end %>
           <%= link_to calendar_path, class: ("active" if controller_name == "calendar") do %><span class="ico">🗓️</span><span class="lbl">Calendar</span><% end %>
           <%= link_to analytics_path, class: ("active" if controller_name == "analytics") do %><span class="ico">📊</span><span class="lbl">Analytics</span><% end %>
         </nav>

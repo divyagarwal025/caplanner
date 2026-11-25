@@ -5,7 +5,6 @@ Rails.application.routes.draw do
 
   get "calendar(/:year/:month)", to: "calendar#index", as: :calendar
   get "analytics", to: "analytics#index", as: :analytics
-  get "roadmap", to: "roadmap#index", as: :roadmap
 
   # The night report for a date (free text), which also triggers re-planning.
   resources :night_updates, only: %i[create], param: :date
@@ -24,12 +23,10 @@ Rails.application.routes.draw do
   # AI plans the next day (with deterministic fallback).
   post "plan_tomorrow", to: "ai_plans#create", as: :plan_tomorrow
 
-  resources :subjects, only: %i[index update]
+  resources :subjects, only: %i[index]
   resources :milestones, only: %i[index show new create edit update destroy]
 
-  # Manual triggers to preview the scheduled emails.
-  namespace :emails do
-    post :morning
-    post :evening
-  end
+  # EURA chatbot coach: post a message, stream back her reply. destroy clears it.
+  resource :coach, only: %i[create destroy], controller: "coach"
+
 end

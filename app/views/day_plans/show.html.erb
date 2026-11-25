@@ -24,39 +24,27 @@
           <span class="muted"><%= @item.blocks_done %>/<%= @item.blocks_total %> done · <%= @item.completion_percent %>%</span>
         </div>
 
-        <%= form_with url: save_day_plan_path(@date.iso8601), method: :post do %>
-          <div class="courselist">
-            <% @item.blocks.each_with_index do |b, i| %>
-              <% code  = b["subject_code"] %>
-              <% color = subject_color(code) || kind_color(b["kind"]) %>
-              <div class="courseitem">
-                <div class="avatar-letter" style="background: <%= color %>">
-                  <%= (code && code.first) || b["kind"].to_s.first.to_s.upcase %>
-                </div>
-                <div class="ci-main">
-                  <div class="ci-title"><%= b["activity"] %></div>
-                  <div class="ci-sub">
-                    <%= [ b["start_time"], b["end_time"] ].compact.join(" – ").presence || b["kind"].to_s.humanize %>
-                  </div>
-                  <div class="statebtns" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
-                    <% MilestoneSubjectTaskItem::STATUSES.each do |st| %>
-                      <label class="pill-btn <%= b["status"] == st ? status_pill_class(st) : 'soft-grey' %>"
-                             style="cursor:pointer">
-                        <%= radio_button_tag "statuses[#{i}]", st, b["status"] == st, style: "display:none" %>
-                        <%= status_label(st) %>
-                      </label>
-                    <% end %>
-                  </div>
+        <!-- view-only: block status cannot be changed here -->
+        <div class="courselist">
+          <% @item.blocks.each_with_index do |b, i| %>
+            <% code  = b["subject_code"] %>
+            <% color = subject_color(code) || kind_color(b["kind"]) %>
+            <div class="courseitem">
+              <div class="avatar-letter" style="background: <%= color %>">
+                <%= (code && code.first) || b["kind"].to_s.first.to_s.upcase %>
+              </div>
+              <div class="ci-main">
+                <div class="ci-title"><%= b["activity"] %></div>
+                <div class="ci-sub">
+                  <%= [ b["start_time"], b["end_time"] ].compact.join(" – ").presence || b["kind"].to_s.humanize %>
                 </div>
               </div>
-            <% end %>
-          </div>
-
-          <div class="actions" style="margin-top:16px">
-            <%= submit_tag "💾 Save day & update progress", class: "btn ai" %>
-            <%= link_to "← Dashboard", root_path, class: "btn ghost" %>
-          </div>
-        <% end %>
+              <span class="pill-btn <%= status_pill_class(b["status"]) %>">
+                <%= status_label(b["status"]) %>
+              </span>
+            </div>
+          <% end %>
+        </div>
       </div>
     </div>
 

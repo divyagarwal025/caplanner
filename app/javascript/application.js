@@ -24,4 +24,17 @@ function applyChartTheme() {
   Chart.defaults.font.family = "Inter, system-ui, sans-serif"
 }
 applyChartTheme()
-document.addEventListener("turbo:load", applyChartTheme)
+
+// On a Turbo navigation the body is swapped in but the inline chart scripts
+// that already ran on the previous page do NOT re-run, so a chart rendered
+// into the new page's container never gets created and stays on "Loading…".
+// Re-draw every Chartkick chart after each Turbo page load.
+function redrawCharts() {
+  applyChartTheme()
+  if (!window.Chartkick || !Chartkick.charts) return
+  Object.values(Chartkick.charts).forEach(function(c) {
+    try { c.redraw() } catch (e) {}
+  })
+}
+document.addEventListener("turbo:load", redrawCharts)
+document.addEventListener("turbo:render", redrawCharts)

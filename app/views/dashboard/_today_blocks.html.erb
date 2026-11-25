@@ -1,0 +1,42 @@
+<div id="today_blocks">
+  <div class="section-title">
+    Today's blocks
+    <% if today %><span class="muted"><%= today.blocks_done %>/<%= today.blocks_total %> · <%= today.completion_percent %>%</span><% end %>
+  </div>
+  <% if today.nil? %>
+    <div class="courselist">
+      <p class="muted">No plan for today.</p>
+    </div>
+  <% else %>
+    <!-- today's blocks — each status click auto-saves over AJAX (no reload) -->
+    <div class="courselist">
+      <% today.blocks.each_with_index do |b, i| %>
+        <% code = b["subject_code"] %>
+        <% color = subject_color(code) || kind_color(b["kind"]) %>
+        <div class="courseitem">
+          <div class="avatar-letter" style="background: <%= color %>">
+            <%= (code && code.first) || b["kind"].to_s.first.to_s.upcase %>
+          </div>
+          <div class="ci-main">
+            <div class="ci-title"><%= b["activity"] %></div>
+            <div class="ci-sub">
+              <%= [ b["start_time"], b["end_time"] ].compact.join(" – ").presence || b["kind"].to_s.humanize %>
+            </div>
+            <div class="state-seg"
+                 data-controller="block-status"
+                 data-block-status-url-value="<%= block_path(Date.current.iso8601, i) %>"
+                 data-block-status-token-value="<%= form_authenticity_token %>">
+              <% MilestoneSubjectTaskItem::STATUSES.each do |st| %>
+                <label class="seg-btn seg-<%= st %>">
+                  <%= radio_button_tag "block_#{i}", st, b["status"] == st,
+                        data: { action: "block-status#change" } %>
+                  <span><%= status_label(st) %></span>
+                </label>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

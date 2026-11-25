@@ -1,6 +1,0 @@
-<%= turbo_stream.replace dom_id(@task) do %>
-  <%= render "task_items/task", task: @task %>
-<% end %>
-<%= turbo_stream.replace "today-progress" do %>
-  <%= render "dashboard/progress", plan: @plan %>
-<% end %>

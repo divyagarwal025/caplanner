@@ -1,0 +1,12 @@
+<%# AJAX response: patch just the three fragments that change, no page reload. %>
+<%= turbo_stream.replace "today_blocks" do %>
+  <%= render "dashboard/today_blocks", today: @today %>
+<% end %>
+
+<%= turbo_stream.replace "current_activity" do %>
+  <%= render "dashboard/current_activity", today: @today %>
+<% end %>
+
+<%= turbo_stream.replace "subjects_list" do %>
+  <%= render "dashboard/subjects", subjects: @subjects %>
+<% end %>

@@ -1,0 +1,61 @@
+<% content_for :title, "Milestones" %>
+
+<div class="page-head">
+  <h1>Milestones</h1>
+  <span class="muted">Click a milestone to see what it tracks.</span>
+</div>
+
+<% if @milestones.empty? %>
+  <div class="card"><p class="muted">No milestones yet.</p></div>
+<% else %>
+  <div class="ms-list">
+    <% @milestones.each do |m| %>
+      <% state = m.end_date < @today ? "done" : (m.covers?(@today) ? "active" : "upcoming") %>
+      <% badge = { "active" => "● Active", "done" => "✓ Done", "upcoming" => "○ Upcoming" }[state] %>
+      <% pill  = { "active" => "soft-teal", "done" => "soft-grey", "upcoming" => "soft-blue" }[state] %>
+
+      <details class="card ms-card <%= state %>" <%= "open" if state == "active" %>>
+        <summary class="ms-head">
+          <div>
+            <div class="ms-name"><%= m.name %></div>
+            <div class="ms-dates">
+              <%= m.start_date.strftime("%d %b %Y") %> →
+              <strong><%= m.end_date.strftime("%d %b %Y") %></strong>
+              <span class="muted">· <%= m.length_in_days %> days<%= " · +#{m.buffer_time} buffer" if m.buffer_time.to_i.positive? %></span>
+            </div>
+          </div>
+          <span class="ms-head-right">
+            <span class="pill-btn <%= pill %>"><%= badge %></span>
+            <span class="ms-caret">▾</span>
+          </span>
+        </summary>
+
+        <% tasks = m.milestone_subject_tasks.sort_by { |t| [t.subject.code, t.task_type] } %>
+        <% if tasks.any? %>
+          <div class="ms-tasks">
+            <% tasks.each do |t| %>
+              <% pct = t.progress_percent %>
+              <div class="ms-task">
+                <div class="avatar-letter sm" style="background: <%= t.subject.color %>"><%= t.subject.code.first %></div>
+                <div class="ms-task-main">
+                  <div class="ms-task-title">
+                    <span><%= t.subject.code %> · <%= t.label %></span>
+                    <span class="pill-btn <%= status_pill_class(t.status == "in_progress" ? "partially_done" : (t.status == "done" ? "done" : "not_started")) %>">
+                      <%= t.status.humanize %>
+                    </span>
+                  </div>
+                  <div class="bar" style="margin-top:6px">
+                    <span style="width:<%= pct %>%;background:<%= t.subject.color %>"></span>
+                  </div>
+                </div>
+                <div class="ms-task-pct"><%= pct %>%</div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="muted" style="margin-top:10px">No subject tasks assigned to this milestone.</p>
+        <% end %>
+      </details>
+    <% end %>
+  </div>
+<% end %>

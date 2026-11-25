@@ -1,0 +1,68 @@
+<%# EURA — AI chatbot coach. Lives in the top-row right column. %>
+<%# Action Cable: subscribe this page to EURA's stream; replies are broadcast. %>
+<%= turbo_stream_from CoachController.stream_name(current_user) %>
+<div class="coach-chat" data-controller="coach-chat">
+  <div class="coach-chat-head">
+    <div class="coach-chat-avatar">
+      <% if (Rails.root.join("app/assets/images/coach-push.png").exist? rescue false) %>
+        <%= image_tag "coach-push.png", alt: "EURA" %>
+      <% else %>
+        <span>💛</span>
+      <% end %>
+    </div>
+    <div>
+      <div class="coach-chat-name">
+        <span class="coach-badge">EURA</span>
+        <span class="coach-role">your coach</span>
+      </div>
+      <div class="coach-chat-status">Here to cheer you on</div>
+    </div>
+    <%= button_to coach_path, method: :delete, form: { data: { turbo_stream: true } },
+          class: "coach-clear", title: "Clear chat" do %>⟳<% end %>
+  </div>
+
+  <div class="coach-log" data-coach-chat-target="log">
+    <%# Always-present welcome + schedule (NOT cleared by the ⟳ button). %>
+    <div class="chat-msg coach">
+      <div class="bubble">
+        <%= coach_greeting %> I'm <strong>EURA</strong>, <%= current_user.display_name %>'s personal assistant.
+        Let me guide you through today's tasks. 💛
+      </div>
+    </div>
+    <% blocks = (today&.studyable_blocks || []) %>
+    <div class="chat-msg coach">
+      <div class="bubble">
+        <% if blocks.any? %>
+          Here's your schedule for today:
+          <div class="chat-schedule">
+            <% blocks.each_with_index do |b, i| %>
+              <div class="chat-sched-row">
+                <span class="chat-sched-time"><%= [b["start_time"], b["end_time"]].compact.join("–").presence || "Anytime" %></span>
+                <span class="chat-sched-task"><%= b["activity"] %></span>
+              </div>
+            <% end %>
+          </div>
+          Let's start — tell me when you're ready, or ask me anything. 🚀
+        <% else %>
+          You don't have a plan set for today yet. Tell me what you'd like to work on and we'll build it together. 🚀
+        <% end %>
+      </div>
+    </div>
+
+    <%# The conversation (persisted). Cable broadcasts + ⟳ clear target ONLY this. %>
+    <div id="coach_log">
+      <% @coach_chat.messages.each do |m| %>
+        <%= render "coach/message",
+              role: (m.role == "assistant" ? "coach" : "user"),
+              text: m.content %>
+      <% end %>
+    </div>
+  </div>
+
+  <%= form_with url: coach_path, method: :post, class: "coach-form",
+        data: { action: "turbo:submit-end->coach-chat#sent", turbo_stream: true } do |f| %>
+    <%= f.text_field :message, placeholder: "Talk to EURA…", autocomplete: "off",
+          class: "coach-input", data: { "coach-chat-target": "input" } %>
+    <%= f.submit "Send", class: "coach-send" %>
+  <% end %>
+</div>

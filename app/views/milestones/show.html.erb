@@ -1,0 +1,50 @@
+<% content_for :title, @milestone.name %>
+<% @today = Date.current %>
+<% m = @milestone %>
+<% state = m.end_date < @today ? "done" : (m.covers?(@today) ? "active" : "upcoming") %>
+
+<div class="page-head">
+  <h1><%= m.name %></h1>
+  <%= link_to "← All milestones", milestones_path, class: "muted" %>
+</div>
+
+<div class="card ms-card <%= state %>">
+  <div class="ms-head">
+    <div>
+      <div class="ms-dates">
+        <%= m.start_date.strftime("%d %b %Y") %> →
+        <strong><%= m.end_date.strftime("%d %b %Y") %></strong>
+        <span class="muted">· <%= m.length_in_days %> days<%= " · +#{m.buffer_time} buffer" if m.buffer_time.to_i.positive? %></span>
+      </div>
+    </div>
+    <span class="pill-btn <%= { 'active' => 'soft-teal', 'done' => 'soft-grey', 'upcoming' => 'soft-blue' }[state] %>">
+      <%= { 'active' => '● Active', 'done' => '✓ Done', 'upcoming' => '○ Upcoming' }[state] %>
+    </span>
+  </div>
+
+  <% tasks = m.milestone_subject_tasks.sort_by { |t| [t.subject.code, t.task_type] } %>
+  <% if tasks.any? %>
+    <div class="ms-tasks">
+      <% tasks.each do |t| %>
+        <% pct = t.progress_percent %>
+        <div class="ms-task">
+          <div class="avatar-letter sm" style="background: <%= t.subject.color %>"><%= t.subject.code.first %></div>
+          <div class="ms-task-main">
+            <div class="ms-task-title">
+              <span><%= t.subject.code %> · <%= t.label %></span>
+              <span class="pill-btn <%= status_pill_class(t.status == "in_progress" ? "partially_done" : (t.status == "done" ? "done" : "not_started")) %>">
+                <%= t.status.humanize %>
+              </span>
+            </div>
+            <div class="bar" style="margin-top:6px">
+              <span style="width:<%= pct %>%;background:<%= t.subject.color %>"></span>
+            </div>
+          </div>
+          <div class="ms-task-pct"><%= pct %>%</div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="muted" style="margin-top:10px">No subject tasks assigned to this milestone.</p>
+  <% end %>
+</div>

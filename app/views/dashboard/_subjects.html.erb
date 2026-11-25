@@ -1,0 +1,14 @@
+<div id="subjects_list" class="courselist">
+  <% subjects.each do |s| %>
+    <div class="courseitem">
+      <div class="avatar-letter" style="background: <%= s.color %>"><%= s.code.first %></div>
+      <div class="ci-main">
+        <div class="ci-title"><%= s.code %> · <%= s.progress_percent %>%</div>
+        <div class="ci-sub"><%= s.lectures_done %>/<%= s.total_lectures %> lectures</div>
+        <div class="bar" style="margin-top:7px">
+          <span style="width:<%= s.progress_percent %>%;background:<%= s.color %>"></span>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

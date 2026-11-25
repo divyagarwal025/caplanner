@@ -1,17 +1,7 @@
+# Courses: per-subject tracking of every work stream —
+# Lectures, Revision 1, Revision 2, Mock 1 and Mock 2.
 class SubjectsController < ApplicationController
   def index
-    @subjects = Subject.all
-  end
-
-  def update
-    @subject = Subject.find(params[:id])
-    @subject.update(subject_params)
-    redirect_to subjects_path, notice: "#{@subject.code} updated."
-  end
-
-  private
-
-  def subject_params
-    params.require(:subject).permit(:lectures_done, :lectures_total)
+    @subjects = current_user.subjects.includes(:revision_topics).ordered
   end
 end

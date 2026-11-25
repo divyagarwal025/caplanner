@@ -1,0 +1,9 @@
+<div id="current_activity">
+  <div class="ring-wrap">
+    <%= progress_ring(today&.completion_percent.to_i, size: 140, stroke: 13) %>
+    <span class="muted" style="font-weight:600">
+      <%= today&.blocks_done.to_i %> of <%= today&.blocks_total.to_i %> blocks done
+    </span>
+  </div>
+
+</div>

@@ -20,20 +20,13 @@
           <span class="ic pink">⏳</span>
           <span><span class="big"><%= @days_left || "—" %></span><br><span class="lbl">Days to exam</span></span>
         </div>
-        <div class="hero-pill">
-          <span class="ic amber">🔥</span>
-          <span><span class="big"><%= @streak %></span><br><span class="lbl">Day streak</span></span>
-        </div>
       </div>
     </div>
   </div>
 
   <div class="col-4">
     <div class="promo">
-      <h3>Ready to plan<br>tomorrow? 🌙</h3>
-      <%= button_to plan_tomorrow_path, method: :post, class: "cta" do %>
-        ✨ Plan tomorrow<%= " with AI" if @ai_enabled %>
-      <% end %>
+      <h3>Today at a glance 📊</h3>
       <div class="promo-mini">
         <div class="m">
           <div class="cap blue">This week</div>
@@ -55,34 +48,7 @@
   <!-- today's study blocks -->
   <div class="col-4">
     <div class="card">
-      <div class="section-title">
-        Today's blocks
-        <%= link_to "Full day →", day_plan_path(@date.iso8601) %>
-      </div>
-      <div class="courselist">
-        <% if @today.nil? %>
-          <p class="muted">No plan for today. <%= link_to "Plan it →", day_plan_path(@date.iso8601) %></p>
-        <% else %>
-          <% @today.blocks.each_with_index do |b, i| %>
-            <% code = b["subject_code"] %>
-            <% color = subject_color(code) || kind_color(b["kind"]) %>
-            <div class="courseitem">
-              <div class="avatar-letter" style="background: <%= color %>">
-                <%= (code && code.first) || b["kind"].to_s.first.to_s.upcase %>
-              </div>
-              <div class="ci-main">
-                <div class="ci-title"><%= b["activity"] %></div>
-                <div class="ci-sub">
-                  <%= [ b["start_time"], b["end_time"] ].compact.join(" – ").presence || b["kind"].to_s.humanize %>
-                </div>
-              </div>
-              <span class="pill-btn <%= status_pill_class(b["status"]) %>">
-                <%= status_label(b["status"]) %>
-              </span>
-            </div>
-          <% end %>
-        <% end %>
-      </div>
+      <%= render "today_blocks", today: @today %>
     </div>
   </div>
 
@@ -90,12 +56,7 @@
   <div class="col-4">
     <div class="card">
       <div class="section-title">Current activity</div>
-      <div class="ring-wrap">
-        <%= progress_ring(@today&.completion_percent.to_i, size: 140, stroke: 13) %>
-        <span class="muted" style="font-weight:600">
-          <%= @today&.blocks_done.to_i %> of <%= @today&.blocks_total.to_i %> blocks done
-        </span>
-      </div>
+      <%= render "current_activity", today: @today %>
 
       <div style="margin-top:14px">
         <div class="sub" style="margin-bottom:8px">This week</div>
@@ -113,78 +74,69 @@
     </div>
   </div>
 
-  <!-- subjects -->
+  <!-- EURA chatbot coach -->
   <div class="col-4">
-    <div class="card">
-      <div class="section-title">Subjects</div>
-      <div class="courselist">
-        <% @subjects.each do |s| %>
-          <div class="courseitem">
-            <div class="avatar-letter" style="background: <%= s.color %>"><%= s.code.first %></div>
-            <div class="ci-main">
-              <div class="ci-title"><%= s.code %> · <%= s.progress_percent %>%</div>
-              <div class="ci-sub"><%= s.lectures_done %>/<%= s.total_lectures %> lectures</div>
-              <div class="bar" style="margin-top:7px">
-                <span style="width:<%= s.progress_percent %>%;background:<%= s.color %>"></span>
-              </div>
-            </div>
-          </div>
-        <% end %>
-      </div>
+    <div class="card card-flush">
+      <%= render "coach_chat", today: @today %>
     </div>
   </div>
 </div>
 
-<!-- ===== night update + roadmap ===== -->
+<!-- ===== roadmap + subjects ===== -->
 <div class="grid">
   <div class="col-8">
-    <div class="card">
-      <h2>🌙 Night update → plan tomorrow</h2>
-      <div class="sub">
-        Tick what you finished above, then tell the planner what's still left or skipped.
-        It re-plans <%= (@date + 1).strftime("%a %d %b") %> toward your exam goal.
-      </div>
-      <%= form_with url: night_updates_path, method: :post do |f| %>
-        <%= hidden_field_tag "date", @date.iso8601 %>
-        <div class="field">
-          <%= text_area_tag "todays_productivity", @today&.todays_productivity, rows: 3,
-                placeholder: "e.g. Finished IDT lecture, FR revision half done, skipped DT — too tired. Push DT tomorrow." %>
-        </div>
-        <div class="actions">
-          <%= f.submit "✨ Save & plan tomorrow#{' with AI' if @ai_enabled}", class: "btn ai" %>
-          <%= button_to "☀️ Morning brief", emails_morning_path, class: "btn ghost" %>
-          <%= button_to "🌙 Evening review", emails_evening_path, class: "btn ghost" %>
-        </div>
-      <% end %>
-
-      <% if @tomorrow %>
-        <div class="ai-note" style="margin-top:14px">
-          <strong>Tomorrow is planned:</strong>
-          <%= @tomorrow.summary.presence || "#{@tomorrow.blocks_total} blocks scheduled" %>
-          <%= link_to "View →", day_plan_path((@date + 1).iso8601) %>
-        </div>
-      <% end %>
-    </div>
-  </div>
-
-  <div class="col-4">
     <div class="card" style="height:100%">
       <h2>🎯 Roadmap</h2>
       <% if @milestone %>
+        <% tasks = @milestone.milestone_subject_tasks.includes(subject: :revision_topics).to_a %>
+        <% ms_pct = tasks.any? ? (tasks.sum(&:progress_percent) / tasks.size.to_f).round : 0 %>
+        <% days_left = [ (@milestone.end_date - @date).to_i, 0 ].max %>
+
         <div class="ai-note" style="margin-top:10px">
-          <strong><%= @milestone.name %>.</strong>
-          <%= @milestone.start_date.strftime("%d %b") %> – <%= @milestone.end_date.strftime("%d %b") %>
+          <strong><%= @milestone.name %></strong><br>
+          <%= @milestone.start_date.strftime("%d %b") %> – <%= @milestone.end_date.strftime("%d %b %Y") %>
+          · <span style="font-weight:700"><%= days_left %> days left</span>
         </div>
-        <div class="sub" style="margin-bottom:8px">In scope now</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <% @milestone.milestone_subject_tasks.includes(:subject).each do |t| %>
-            <span class="pill-btn soft-teal"><%= t.subject.code %> · <%= t.task_type.humanize %></span>
+
+        <div class="ms-progress-top">
+          <span class="sub" style="margin:0">Milestone progress</span>
+          <span style="font-weight:800;font-size:.85rem;color:var(--teal)"><%= ms_pct %>%</span>
+        </div>
+        <div class="bar" style="margin:6px 0 14px"><span style="width:<%= ms_pct %>%"></span></div>
+
+        <div class="sub" style="margin-bottom:10px">What we're covering now</div>
+        <div class="ms-tasks">
+          <% tasks.sort_by { |t| [t.subject.code, t.task_type] }.each do |t| %>
+            <% pct = t.progress_percent %>
+            <div class="ms-task">
+              <div class="avatar-letter sm" style="background: <%= t.subject.color %>"><%= t.subject.code.first %></div>
+              <div class="ms-task-main">
+                <div class="ms-task-title">
+                  <span><%= t.subject.code %> · <%= t.label %></span>
+                  <span class="pill-btn <%= status_pill_class(t.status == "in_progress" ? "partially_done" : (t.status == "done" ? "done" : "not_started")) %>">
+                    <%= t.status.humanize %>
+                  </span>
+                </div>
+                <div class="bar" style="margin-top:6px">
+                  <span style="width:<%= pct %>%;background:<%= t.subject.color %>"></span>
+                </div>
+              </div>
+              <div class="ms-task-pct"><%= pct %>%</div>
+            </div>
           <% end %>
         </div>
       <% else %>
         <p class="muted" style="margin-top:10px">No active milestone for today.</p>
       <% end %>
-      <div class="actions"><%= link_to "See full roadmap →", roadmap_path %></div>
+      <div class="actions"><%= link_to "See all milestones →", milestones_path %></div>
+    </div>
+  </div>
+
+  <!-- subjects -->
+  <div class="col-4">
+    <div class="card" style="height:100%">
+      <div class="section-title">Subjects</div>
+      <%= render "subjects", subjects: @subjects %>
     </div>
   </div>
 </div>

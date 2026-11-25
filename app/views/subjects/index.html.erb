@@ -1,21 +1,60 @@
-<% content_for :title, "Subjects" %>
-<h1 style="font-size:1.3rem">Syllabus progress</h1>
+<% content_for :title, "Courses" %>
 
-<% @subjects.each do |s| %>
-  <div class="card">
-    <div class="subject-row">
-      <div class="top">
-        <span><span class="dot" style="background:<%= s.color %>"></span><strong><%= s.code %></strong> · <%= s.name %></span>
-        <span><%= s.progress_percent %>% · <%= s.remaining %> left</span>
+<div class="page-head">
+  <h1>Courses</h1>
+  <span class="muted">Every subject — lectures, both revisions, and both mocks.</span>
+</div>
+
+<%
+  # subject status string (not_started / in_progress / done) -> pill class + label
+  def course_pill(status)
+    case status.to_s
+    when "done"        then ["soft-teal", "✓ Done"]
+    when "in_progress" then ["soft-amber", "◐ In progress"]
+    else                    ["soft-grey", "○ Not started"]
+    end
+  end
+%>
+
+<div class="course-grid">
+  <% @subjects.each do |s| %>
+    <div class="card course-card">
+      <div class="course-head">
+        <div class="avatar-letter" style="background: <%= s.color %>"><%= s.code.first %></div>
+        <div>
+          <div class="course-code"><%= s.code %></div>
+          <div class="muted" style="font-size:.78rem"><%= s.name %></div>
+        </div>
       </div>
-      <div class="bar"><span style="width:<%= s.progress_percent %>%;background:<%= s.color %>"></span></div>
+
+      <%
+        streams = [
+          ["Lectures",   s.lecture_status.presence || "not_started", s.progress_percent,
+                         "#{s.lectures_done}/#{s.total_lectures}"],
+          ["Revision 1", s.revision_status(1), s.revision_percent(1),
+                         "#{s.revision_done_count(1)}/#{s.revision_topics.size} topics"],
+          ["Revision 2", s.revision_status(2), s.revision_percent(2),
+                         "#{s.revision_done_count(2)}/#{s.revision_topics.size} topics"],
+          ["Mock 1",     s.mock_status(1), (s.mock_status(1) == "done" ? 100 : 0), nil],
+          ["Mock 2",     s.mock_status(2), (s.mock_status(2) == "done" ? 100 : 0), nil]
+        ]
+      %>
+
+      <div class="streams">
+        <% streams.each do |name, status, pct, sub| %>
+          <% pclass, plabel = course_pill(status) %>
+          <div class="stream">
+            <div class="stream-top">
+              <span class="stream-name"><%= name %></span>
+              <span class="pill-btn <%= pclass %>"><%= plabel %></span>
+            </div>
+            <div class="bar" style="margin-top:6px">
+              <span style="width:<%= pct %>%;background:<%= s.color %>"></span>
+            </div>
+            <div class="stream-sub muted"><%= [sub, "#{pct}%"].compact.join(" · ") %></div>
+          </div>
+        <% end %>
+      </div>
     </div>
-    <%= form_with model: s, url: subject_path(s), method: :patch do |f| %>
-      <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-top:10px">
-        <div class="field" style="margin:0"><label>Done</label><%= f.number_field :lectures_done, min: 0 %></div>
-        <div class="field" style="margin:0"><label>Total</label><%= f.number_field :lectures_total, min: 0 %></div>
-        <%= f.submit "Save", class: "btn" %>
-      </div>
-    <% end %>
-  </div>
-<% end %>
+  <% end %>
+</div>

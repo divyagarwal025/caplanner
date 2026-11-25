@@ -12,5 +12,8 @@ bundle exec rails assets:clean
 # loads the Solid cache/queue/cable schemas into the same Postgres database.
 bundle exec rails db:prepare
 
-# Seed CA Final subjects/goals only if the subjects table is empty (idempotent).
+# Seeds the EXACT current domain data from db/seed_data.rb (subjects, revision
+# topics, milestones, tasks, the 48 day-plan items + progress) and fetches the
+# RubyLLM model catalog. Idempotent — upserts by natural keys, safe to re-run.
+# Set SEED_USER_EMAIL / SEED_USER_PASSWORD in the environment for the user login.
 bundle exec rails db:seed

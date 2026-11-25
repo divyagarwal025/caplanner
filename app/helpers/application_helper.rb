@@ -41,6 +41,69 @@ module ApplicationHelper
     (@subject_colors ||= Subject.all.index_by(&:code))[code]&.color
   end
 
+  # --- motivational coach (girl under the progress ring) ---------------------
+  #
+  # The dashboard's personal motivator coach. She has a name — EURA — and speaks
+  # in the same warm, caring mentor voice as the morning-brief guide
+  # (BriefWriter::GUIDE_NAME). Her message changes with today's completion %.
+  #
+  # Returns { coach:, image:, title:, message:, mood: } chosen from today's %.
+  # Images live in app/assets/images/ — provide these three files:
+  #   coach-celebrate.png  coach-push.png  coach-start.png
+  COACH_NAME = "EURA".freeze
+
+  # Each line is written as EURA speaking directly to the student.
+  COACH_CELEBRATE = [
+    "You did it — every single block, done. I'm so proud of you today. 🎉",
+    "A perfect day. This is exactly how rank-holders are made, and you just proved it.",
+    "100%! Close the books and rest proud tonight — you earned every bit of it. ❤️"
+  ].freeze
+  COACH_PUSH = [
+    "Beautiful momentum! Just a little more and today is a clean sweep — I believe in you. 💪",
+    "You're already past the hard part. Finish strong, I'm right here cheering you on.",
+    "Keep going — the last few blocks are where champions are made. You've got this."
+  ].freeze
+  COACH_START = [
+    "Good to see you! Let's start gentle — just open the first block, and I'll be with you. ✨",
+    "The hardest part is beginning. Tick one task, and the rest will follow. You can do this.",
+    "A fresh day, a fresh start. Future-you is counting on today — shall we begin? 🚀"
+  ].freeze
+
+  # Each mood's headline, in EURA's voice.
+  COACH_TITLES = {
+    "celebrate" => "EURA is so proud! 🎉",
+    "push"      => "EURA says: keep pushing! 💪",
+    "start"     => "EURA is here for you ✨"
+  }.freeze
+
+  # Time-of-day greeting for EURA's welcome message.
+  def coach_greeting(now = Time.current)
+    h = now.hour
+    if h < 12 then "Good morning!"
+    elsif h < 17 then "Good afternoon!"
+    else "Good evening!"
+    end
+  end
+
+  # pct: today's completion percent (0–100). seed keeps the line stable per render.
+  def coach_for(pct, seed = Date.current.to_s)
+    pct  = pct.to_i
+    mood =
+      if pct >= 100 then "celebrate"
+      elsif pct.positive? then "push"
+      else "start"
+      end
+    lines = { "celebrate" => COACH_CELEBRATE, "push" => COACH_PUSH, "start" => COACH_START }[mood]
+
+    {
+      coach:   COACH_NAME,
+      image:   "coach-#{mood}.png",
+      title:   COACH_TITLES[mood],
+      message: lines[seed.hash.abs % lines.size],
+      mood:    mood
+    }
+  end
+
   # --- 3-state block status helpers ------------------------------------------
 
   STATUS_LABELS = {
@@ -61,6 +124,27 @@ module ApplicationHelper
 
   def status_pill_class(status)
     STATUS_PILL.fetch(status.to_s, "soft-blue")
+  end
+
+  # Small square swatch colour for a block's status, used by the calendar's
+  # read-only block dots. Future days always render as "not started".
+  STATUS_DOT = {
+    "done"           => "#14b8a6", # teal
+    "partially_done" => "#f59e0b", # amber
+    "not_started"    => "#cbd5e1"  # grey
+  }.freeze
+
+  # The status to DISPLAY for a block on a given calendar date. Past & today use
+  # the stored status; tomorrow and later are always shown as not_started.
+  def calendar_block_status(block, date)
+    return "not_started" if date > Date.current
+    STATUSES_FALLBACK.include?(block["status"].to_s) ? block["status"].to_s : "not_started"
+  end
+
+  STATUSES_FALLBACK = %w[not_started partially_done done].freeze
+
+  def status_dot_color(status)
+    STATUS_DOT.fetch(status.to_s, "#cbd5e1")
   end
 
   # Green→amber→grey scale for a completion percentage (calendar cells, rings).

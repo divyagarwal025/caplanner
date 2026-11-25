@@ -1,0 +1,4 @@
+<%# One chat bubble. role: "user" | "coach". %>
+<div class="chat-msg <%= role %>">
+  <div class="bubble"><%= simple_format(text.to_s, {}, wrapper_tag: "span") %></div>
+</div>

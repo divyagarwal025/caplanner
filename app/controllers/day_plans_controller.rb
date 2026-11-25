@@ -8,20 +8,25 @@ class DayPlansController < ApplicationController
     @item      = day_item_for(@date)
   end
 
-  # Persist each block's status for the day, then roll up (the "Save" button).
+  # Persist each block's status, then roll up. Status is editable ONLY for today
+  # and ONLY from the dashboard, so refuse any other date.
   def save
     @date = Date.parse(params[:date])
-    item  = day_item_for(@date)
 
+    unless @date == Date.current
+      return redirect_to root_path, alert: "You can only update today's blocks."
+    end
+
+    item = day_item_for(@date)
     if item
       # params[:statuses] => { "0" => "done", "1" => "partially_done", ... }
       item.save_day!(params[:statuses]&.to_unsafe_h || {})
-      notice = "Saved #{@date.strftime('%a %d %b')} — progress updated."
+      notice = "Progress updated."
     else
-      notice = "No plan found for #{@date.strftime('%a %d %b')}."
+      notice = "No plan found for today."
     end
 
-    redirect_to day_plan_path(@date.iso8601), notice: notice
+    redirect_to root_path, notice: notice
   end
 
   # Placeholder until the deterministic day generator is wired as a service.

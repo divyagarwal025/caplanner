@@ -1,16 +1,25 @@
 <% content_for :title, "Analytics" %>
 
 <div class="page-head">
-  <h1>Analytics</h1>
-  <span class="muted">Last 30 days</span>
+  <h1>Productivity</h1>
+  <span class="muted"><%= @from.strftime("%d %b") %> – <%= @to.strftime("%d %b %Y") %></span>
 </div>
 
-<div class="grid">
-  <div class="col-12">
-    <div class="card">
-      <h2>Progress per day</h2>
+<div class="card">
+  <div class="analytics-top">
+    <div>
+      <h2>Completion per day</h2>
       <div class="sub">Share of study blocks finished each day</div>
-      <%= column_chart @completion_series, max: 100, colors: ["#2bb7a3"], library: { scales: { y: { ticks: { callback: nil } } } } %>
+    </div>
+    <div class="range-filter">
+      <% AnalyticsController::RANGES.each do |key, cfg| %>
+        <%= link_to cfg[:label], analytics_path(range: key),
+              class: "pill-btn #{@range == key ? 'soft-teal' : 'soft-grey'}" %>
+      <% end %>
     </div>
   </div>
+
+  <%= column_chart @completion_series, max: 100, colors: ["#2bb7a3"], height: "420px",
+        suffix: "%", library: { scales: { y: { beginAtZero: true, max: 100 } },
+                                plugins: { legend: { display: false } } } %>
 </div>

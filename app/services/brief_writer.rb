@@ -1,13 +1,13 @@
-# Writes the personalised morning letter (and short evening note) for the email
-# briefs, in the warm voice of "Eura", the student's preparation guide. The
-# morning letter is freshly written by AI each day so no two mornings read the
-# same, with a deterministic rotating fallback when AI is off or the call fails,
-# so the mailer always has something warm to send.
+# Writes the personalised morning letter for the email brief, in the warm voice
+# of a caring study guide. The letter is freshly written by AI each day (so no
+# two mornings read the same), with a deterministic rotating fallback when AI is
+# off or the call fails — so the mailer always has something warm to send.
+#
+# New-schema aware: it reads today's MilestoneSubjectTaskItem (jsonb blocks) and
+# the active Milestone for phase / days-left context.
 class BriefWriter
-  STUDENT_NAME = "Chhavi".freeze
-  GUIDE_NAME   = "Eura".freeze
+  GUIDE_NAME = "Eura".freeze
 
-  # Motivational quotes rotated by date for the fallback letter.
   QUOTES = [
     [ "Success is the sum of small efforts, repeated day in and day out.", "Robert Collier" ],
     [ "It always seems impossible until it's done.", "Nelson Mandela" ],
@@ -21,107 +21,100 @@ class BriefWriter
     [ "Quality is not an act, it is a habit.", "Aristotle" ]
   ].freeze
 
-  def initialize(road: RoadmapService.new, today: Date.current)
-    @road  = road
-    @today = today
+  def initialize(today: Date.current, user: User.current)
+    @today     = today
+    @user      = user
+    @name      = user.display_name
+    @milestone = Milestone.for_date(today)
+    @item      = @milestone&.milestone_subject_task_items&.find_by(date: today)
   end
 
-  # Full morning letter as a hash the mailer template renders:
+  # Full morning letter the mailer template renders:
   #   { greeting:, opening:, blocks: [{icon:, time:, title:, note:}], break_tip:,
   #     quote:, quote_author:, closing:, signoff: }
-  # AI-written for daily variety; deterministic rotating fallback otherwise.
-  def morning_letter(plan)
-    blocks = letter_blocks(plan)
+  def morning_letter
+    blocks = letter_blocks
     return fallback_letter(blocks) unless AiClient.enabled?
 
-    ai_letter(plan, blocks) || fallback_letter(blocks)
+    ai_letter(blocks) || fallback_letter(blocks)
   rescue => e
     Rails.logger.warn("[BriefWriter] morning_letter AI failed: #{e.class} #{e.message}")
     fallback_letter(blocks)
   end
 
-  # 1–2 reflective sentences for the evening review (unchanged behaviour).
-  def evening(percent)
-    return evening_fallback(percent) unless AiClient.enabled?
-
-    ai_or_fallback(evening_fallback(percent)) do
-      AiClient.new(temperature: 0.7).ask(<<~PROMPT)
-        Write a short (max 2 sentences) end-of-day message for an Indian CA Final
-        student named #{STUDENT_NAME} who completed #{percent}% of today's study
-        blocks. #{@road.days_left} days to the exam. If they did well, celebrate
-        briefly; if low, be kind and encourage a reset tomorrow. Warm, plain text.
-      PROMPT
-    end
-  end
-
-  # Kept for backward-compatibility with any caller still using the short intro.
-  def morning(plan)
-    morning_letter(plan)[:opening]
-  end
-
   private
 
-  # ---- block data (icon + time + title) from the real plan ------------------
+  # ---- context --------------------------------------------------------------
 
-  def letter_blocks(plan)
-    return [] unless plan
+  def days_left
+    return nil unless @milestone
+    # days to the exam = last milestone's end date for this user.
+    exam_end = @user.milestones.maximum(:end_date)
+    exam_end ? [ (exam_end - @today).to_i, 0 ].max : nil
+  end
 
-    plan.studyable_tasks.ordered.map do |t|
+  def phase_label
+    @milestone&.name || "Preparation"
+  end
+
+  def focus_subjects
+    return [] unless @milestone
+    @milestone.milestone_subject_tasks.includes(:subject).map { |t| t.subject.code }.uniq
+  end
+
+  # ---- block data from today's jsonb schedule -------------------------------
+
+  def letter_blocks
+    return [] unless @item
+
+    @item.blocks.map do |b|
       {
-        icon:  block_icon(t.kind),
-        time:  [ fmt(t.start_time), fmt(t.end_time) ].compact.join(" – ").presence || "Anytime today",
-        title: t.activity,
-        kind:  t.kind
+        icon:  block_icon(b["kind"]),
+        time:  [ b["start_time"], b["end_time"] ].compact.join(" – ").presence || "Anytime today",
+        title: b["activity"].to_s,
+        kind:  b["kind"].to_s
       }
     end
   end
 
   def block_icon(kind)
     case kind
-    when "lecture"  then "📚"
-    when "revision" then "☕"
-    when "mock"     then "📝"
+    when "lecture"            then "📚"
+    when "revision"           then "☕"
+    when "questions"          then "✍️"
+    when "mock", "test"       then "📝"
     else "✨"
     end
   end
 
-  def fmt(hhmm)
-    return nil if hhmm.blank?
-    t = Time.parse(hhmm)
-    t.strftime("%-I:%M %p")
-  rescue ArgumentError
-    hhmm
-  end
-
   # ---- AI letter ------------------------------------------------------------
 
-  def ai_letter(plan, blocks)
+  def ai_letter(blocks)
     payload = AiClient.new(temperature: 0.9).ask_json(<<~PROMPT)
       You are "#{GUIDE_NAME}", a warm, loving, slightly playful personal study
-      guide for an Indian CA Final student named #{STUDENT_NAME}. Write her
-      MORNING motivation email for #{@today.strftime('%A, %d %B %Y')}.
+      guide for an Indian CA Final student named #{@name}. Write her MORNING
+      motivation email for #{@today.strftime('%A, %d %B %Y')}.
 
-      Context: she is in the "#{@road.phase_label}" phase, #{@road.days_left}
-      days from her CA Final exam. Today's focus: #{@road.focus_subjects.join(', ')}.
+      Context: she is in the "#{phase_label}" phase#{days_left ? ", #{days_left} days from her CA Final exam" : ''}.
+      Today's focus: #{focus_subjects.join(', ').presence || 'her plan'}.
 
       Today's blocks (keep the SAME order; write ONE short, specific, encouraging
       line for each, tied to what it is):
-      #{blocks.each_with_index.map { |b, i| "#{i + 1}. #{b[:time]} — #{b[:title]}" }.join("\n")}
+      #{blocks.each_with_index.map { |b, i| "#{i + 1}. #{b[:time]} — #{b[:title]}" }.join("\n").presence || '(no blocks scheduled today)'}
 
       Tone: warm, personal, motivating, like a caring mentor who believes in her.
-      Address her by name. Make it DIFFERENT from a generic template — fresh
-      wording, fresh encouragement. Emojis are welcome but tasteful.
+      Address her by name. Make it fresh — not a generic template. Tasteful emojis welcome.
 
       Return JSON with exactly these keys:
       {
-        "greeting": "e.g. Good Morning, #{STUDENT_NAME}! ☀️❤️",
+        "greeting": "e.g. Good Morning, #{@name}! ☀️❤️",
         "opening": "2-3 sentence warm, motivating opening paragraph",
         "block_notes": ["one encouraging line per block, SAME count and order as the list above"],
-        "break_tip": "1-2 sentences reminding her to rest/power-nap between tasks and not burn out",
+        "break_tip": "1-2 sentences reminding her to rest between tasks and not burn out",
         "quote": "a short motivational quote",
         "quote_author": "the author of the quote",
-        "closing": "a stirring 2-4 sentence closing pep paragraph, ending on a hopeful note",
-        "signoff": "a short warm sign-off line, e.g. Always cheering for you!"
+        "closing": "a stirring 2-4 sentence closing pep paragraph ending on a hopeful note",
+        "signoff": "a short warm sign-off, e.g. Always cheering for you!"
       }
     PROMPT
 
@@ -131,7 +124,7 @@ class BriefWriter
     end
 
     {
-      greeting:     payload["greeting"].presence || "Good Morning, #{STUDENT_NAME}! ☀️❤️",
+      greeting:     payload["greeting"].presence || "Good Morning, #{@name}! ☀️❤️",
       opening:      payload["opening"].presence || fallback_opening,
       blocks:       blocks_with_notes,
       break_tip:    payload["break_tip"].presence || fallback_break_tip,
@@ -142,12 +135,12 @@ class BriefWriter
     }
   end
 
-  # ---- deterministic fallback letter ---------------------------------------
+  # ---- deterministic fallback ----------------------------------------------
 
   def fallback_letter(blocks)
     q = QUOTES[@today.to_s.hash.abs % QUOTES.size]
     {
-      greeting:     "Good Morning, #{STUDENT_NAME}! ☀️❤️",
+      greeting:     "Good Morning, #{@name}! ☀️❤️",
       opening:      fallback_opening,
       blocks:       blocks.map { |b| b.merge(note: default_note(b[:kind])) },
       break_tip:    fallback_break_tip,
@@ -159,9 +152,10 @@ class BriefWriter
   end
 
   def fallback_opening
+    dl = days_left ? "With #{days_left} days to go, every" : "Every"
     "A new day, a fresh start, and another step closer to becoming a CA. " \
-      "You don't need to be perfect today, #{STUDENT_NAME} — you just need to be consistent. " \
-      "With #{@road.days_left} days to go, every block you finish is a brick in the future you're building."
+      "You don't need to be perfect today, #{@name} — you just need to be consistent. " \
+      "#{dl} block you finish is a brick in the future you're building."
   end
 
   def fallback_break_tip
@@ -177,30 +171,11 @@ class BriefWriter
 
   def default_note(kind)
     case kind
-    when "lecture"  then "Stay attentive and make meaningful notes — every concept you master today is one less worry in the exam."
-    when "revision" then "Revise actively: solve questions and flag the areas that need another pass."
-    when "mock"     then "Treat it like the real thing — time it, and review every mistake honestly."
+    when "lecture"            then "Stay attentive and make meaningful notes — every concept you master today is one less worry in the exam."
+    when "revision"           then "Revise actively: solve questions and flag the areas that need another pass."
+    when "questions"          then "Work problems with a timer — speed and accuracy both grow with practice."
+    when "mock", "test"       then "Treat it like the real thing — time it, and review every mistake honestly."
     else "Take care of yourself — your health and energy matter as much as your study hours."
-    end
-  end
-
-  # ---- shared helpers -------------------------------------------------------
-
-  def ai_or_fallback(fallback)
-    text = yield
-    text.presence || fallback
-  rescue => e
-    Rails.logger.warn("[BriefWriter] AI failed: #{e.class} #{e.message}")
-    fallback
-  end
-
-  def evening_fallback(percent)
-    if percent >= 70
-      "Strong day — #{percent}% of your blocks done, #{STUDENT_NAME}. Rest well and keep the streak alive."
-    elsif percent >= 40
-      "Solid effort at #{percent}%. Note what slowed you down and carry it into tomorrow's plan."
-    else
-      "Tough day at #{percent}% — that's okay. Log it honestly and reset; tomorrow is a fresh block."
     end
   end
 end

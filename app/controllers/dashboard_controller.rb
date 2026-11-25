@@ -7,9 +7,10 @@ class DashboardController < ApplicationController
     @subjects   = current_user.subjects.ordered
     @milestones = current_user.milestones.chronological
 
-    @streak     = ProductivityService.current_streak
-    @week_rate  = ProductivityService.week_completion_rate
-    @ai_enabled = AiClient.enabled?
+    @streak       = ProductivityService.current_streak
+    @week_rate    = ProductivityService.week_completion_rate
+    @ai_enabled   = AiClient.enabled?
+    @coach_chat   = CoachConversation.new(user: current_user)
 
     # Days remaining to the exam (= last milestone's end date).
     exam_end    = @milestones.last&.end_date
