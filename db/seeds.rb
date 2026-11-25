@@ -22,8 +22,8 @@ end
 
 ActiveRecord::Base.transaction do
   # ---- user --------------------------------------------------------------
-  email    = ENV.fetch("SEED_USER_EMAIL", "divyagarwal@gmail.com")
-  password = ENV.fetch("SEED_USER_PASSWORD", "changeme")
+  email    = ENV.fetch("SEED_USER_EMAIL", "chhavigoyal030@gmail.com")
+  password = ENV.fetch("SEED_USER_PASSWORD", "3025v")
   user = User.find_or_initialize_by(email: email)
   user.password = password
   user.save!
@@ -86,7 +86,7 @@ end
 # rows in the seed. Set SEED_SKIP_MODELS=1 to skip (e.g. offline test runs).
 if ENV["SEED_SKIP_MODELS"].blank?
   begin
-    RubyLLM::Models.refresh!
+    RubyLLM::Models.refresh
     puts "RubyLLM models refreshed: #{RubyLLM::Model.count rescue 'n/a'}"
   rescue => e
     warn "[seed] RubyLLM::Models.refresh! failed (non-fatal): #{e.class} #{e.message}"
